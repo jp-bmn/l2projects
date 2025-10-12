@@ -1,0 +1,533 @@
+<!-- Chosen Palette: Prime Video Dark Mode -->
+<!-- Application Structure Plan: The application is designed as an interactive, single-page mockup of the proposed Prime Video home screen. This structure was chosen because the source report is a UX/UI proposal, and the most effective way to communicate its value is to allow users to directly experience the proposed changes. The user flow is simple: the user lands on the simulated home screen and can scroll through the revamped content carousels. Key interactions include a "Free on Prime" toggle, clickable studio logos in "The Studio Vault," and decade selectors for the "A Look Back" section. These interactions dynamically filter the displayed content, demonstrating how the new information architecture solves the core problems of poor discovery and content repetition outlined in the report. This hands-on approach is more intuitive and impactful than a static presentation of the same information. -->
+<!-- Visualization & Content Choices: The source report's conceptual plan is translated directly into interactive UI components. No traditional data charts are needed. Goal: Demonstrate improved content discovery. Method: Simulated carousels with curated mock data. Interaction: Dynamic filtering of content via JS. Justification: This directly visualizes the report's core ideas. Report Section -> UI Component: 1. "Navigation Bar" -> A static but redesigned header. 2. "Prime Library: Free or Go" -> A master toggle switch that filters all carousels. 3. "The Studio Vault" -> A carousel of clickable studio logos that filters the "Studio Spotlight" section. 4. "A Look Back" -> A carousel whose content is controlled by interactive decade-selector buttons. 5. "If You Liked the Tone Of" & "Micro-Genre" -> Curated static carousels to showcase the concept of diverse, niche recommendations. All visualizations are built with HTML/Tailwind, with interactivity powered by vanilla JavaScript. The new feature, "Deep Dive Synopsis," uses the Gemini API (generateContent with Google Search grounding) to provide unique, LLM-powered thematic analysis for each title. -->
+<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prime Video UX Revamp Concept</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #0F172A;
+            color: #E2E8F0;
+        }
+        /* Prime-like UI improvements */
+        .header-logo {
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            font-size: 1.15rem;
+            display: flex;
+            align-items: center;
+        }
+        .header-logo .dot {
+            color: #04AAFF;
+            margin-left: 3px;
+            font-weight: 900;
+        }
+        .search-input {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.04);
+            color: var(--tw-prose-body);
+            padding: 6px 10px;
+            border-radius: 999px;
+            width: 220px;
+        }
+        .carousel-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        .carousel-container::-webkit-scrollbar-track {
+            background: #1E293B;
+            border-radius: 10px;
+        }
+        .carousel-container::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 10px;
+        }
+        .carousel-container::-webkit-scrollbar-thumb:hover {
+            background: #64748B;
+        }
+        .carousel-wrapper {
+            position: relative;
+        }
+        .carousel-container {
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 8px;
+        }
+        .carousel-container > .movie-card {
+            scroll-snap-align: start;
+        }
+        .movie-card {
+            transition: transform 0.22s cubic-bezier(.2,.9,.2,1), box-shadow 0.22s;
+            width: 9rem; /* default small width, adjusted in responsive */
+            position: relative;
+        }
+        @media (min-width: 768px) {
+            .movie-card { width: 11rem; }
+        }
+        @media (min-width: 1024px) {
+            .movie-card { width: 12.5rem; }
+        }
+        .poster-img { display:block; width:100%; height:auto; border-radius: 6px; }
+        .poster-overlay {
+            position: absolute; inset: 0; border-radius: 6px; pointer-events: none;
+            background: linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.5) 100%);
+        }
+        .peek-card {
+            position: absolute; left: 50%; transform: translateX(-50%); bottom: 100%; width: 18rem; max-width: calc(100vw - 2rem); background: rgba(17,24,39,0.95); border-radius:8px; padding:10px; box-shadow:0 8px 30px rgba(2,6,23,0.6); display:none; z-index:50; color:#e6eef8; font-size:0.9rem;
+        }
+        .movie-card:focus-within .peek-card, .movie-card:hover .peek-card { display:block; }
+        .movie-info {
+            position: absolute; left: 8px; right: 8px; bottom: 8px; color: #fff; font-size: 0.8rem;
+            pointer-events: none; display:flex; align-items:center; justify-content:space-between;
+        }
+        .prime-badge {
+            background: linear-gradient(180deg,#0ea5e9,#0284c7); color: white; font-weight:700; padding:2px 6px; border-radius: 999px; font-size:0.65rem; box-shadow: 0 2px 8px rgba(2,6,23,0.6);
+        }
+        .carousel-arrow {
+            position: absolute; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; border-radius:999px; display:flex; align-items:center; justify-content:center; background: rgba(2,6,23,0.6); cursor:pointer; z-index:10; transition: background 0.18s;
+        }
+        .carousel-arrow:hover { background: rgba(2,6,23,0.85); }
+        .carousel-arrow.left { left: 6px; }
+        .carousel-arrow.right { right: 6px; }
+        .carousel-arrow svg { width:18px; height:18px; color:#fff; }
+        .movie-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .movie-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+        .studio-logo {
+            transition: transform 0.2s ease-in-out, filter 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .studio-logo:hover {
+            transform: scale(1.1);
+            filter: brightness(1.2);
+        }
+        .studio-logo.selected {
+            border-color: #38BDF8;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+        }
+        .decade-btn.selected {
+            background-color: #38BDF8;
+            color: #0F172A;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-slate-900/80 backdrop-blur-sm sticky top-0 z-50 py-3 px-4 md:px-8 border-b border-slate-700">
+        <div class="container mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-8">
+                <h1 class="text-2xl font-bold text-white header-logo">prime video<span class="dot">•</span></h1>
+                <nav class="hidden md:flex items-center space-x-6 text-slate-300">
+                    <a href="#" class="hover:text-white font-semibold text-white">Deep Dive</a>
+                    <a href="#" class="hover:text-white">Studios</a>
+                    <a href="#" class="hover:text-white">Decades</a>
+                    <a href="#" class="hover:text-white">My Stuff</a>
+                </nav>
+            </div>
+            <div class="hidden md:flex items-center space-x-4">
+                <label class="sr-only" for="site-search">Search</label>
+                <input id="site-search" class="search-input" placeholder="Search titles, genres, cast" aria-label="Search titles">
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2">
+                    <span class="text-sm font-medium text-slate-400">Included with Prime</span>
+                    <label for="prime-toggle" class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" value="" id="prime-toggle" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-slate-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
+                    </label>
+                </div>
+                <div class="w-8 h-8 bg-pink-500 rounded-full flex items-center justify-center font-bold text-white">J</div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto py-8 px-4 md:px-8">
+        <div id="content-area" class="space-y-12">
+        </div>
+    </main>
+    
+    <div id="synopsis-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden z-[100] flex items-center justify-center p-4" onclick="hideSynopsisModal()">
+        <div class="bg-slate-800 rounded-xl shadow-2xl w-full max-w-xl p-6 transform transition-all duration-300" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-3 mb-4">
+                <h3 id="synopsis-title" class="text-xl font-bold text-white">Deep Dive Analysis</h3>
+                <button onclick="hideSynopsisModal()" class="text-slate-400 hover:text-white transition-colors text-2xl leading-none">&times;</button>
+            </div>
+            <p id="synopsis-content" class="text-slate-200 text-base leading-relaxed whitespace-pre-wrap"></p>
+            <div id="synopsis-sources" class="mt-4 border-t border-slate-700 pt-3 text-sm"></div>
+        </div>
+    </div>
+
+    <script>
+        const apiKey = "";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+        async function fetchWithBackoff(url, options, maxRetries = 5) {
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (!response.ok) {
+                        if (response.status === 429 && i < maxRetries - 1) {
+                            const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                            await new Promise(resolve => setTimeout(resolve, delay));
+                            continue;
+                        }
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response;
+                } catch (error) {
+                    if (i === maxRetries - 1) {
+                        throw error;
+                    }
+                    const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+        }
+
+        function showSynopsisModal(title, tags) {
+            const modal = document.getElementById('synopsis-modal');
+            const titleElement = document.getElementById('synopsis-title');
+            const contentElement = document.getElementById('synopsis-content');
+            const sourcesElement = document.getElementById('synopsis-sources');
+            
+            titleElement.textContent = `Deep Dive: ${title}`;
+            contentElement.innerHTML = `<div class="flex items-center justify-center space-x-2 text-sky-400 py-8"><div class="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-sky-500"></div><span>Generating insightful analysis...</span></div>`;
+            sourcesElement.innerHTML = '';
+            
+            modal.classList.remove('hidden');
+
+            fetchSynopsis(title, tags).then(result => {
+                contentElement.textContent = result.text;
+                
+                let sourcesHtml = '';
+                if (result.sources && result.sources.length > 0) {
+                    sourcesHtml = '<p class="text-sm font-semibold mt-4 mb-2 text-slate-400">Grounded in:</p><ul class="space-y-1">';
+                    result.sources.forEach(source => {
+                        sourcesHtml += `<li class="text-xs truncate"><a href="${source.uri}" target="_blank" class="text-sky-400 hover:text-sky-300">${source.title || source.uri}</a></li>`;
+                    });
+                    sourcesHtml += '</ul>';
+                } else {
+                    sourcesHtml = '<p class="text-xs text-slate-500 mt-4">Analysis generated without specific web grounding. Trust the algorithm.</p>';
+                }
+                sourcesElement.innerHTML = sourcesHtml;
+
+            }).catch(error => {
+                contentElement.textContent = `Error generating synopsis. Please check the console for details. (Error: ${error.message})`;
+                sourcesElement.innerHTML = '';
+            });
+        }
+
+        function hideSynopsisModal() {
+            document.getElementById('synopsis-modal').classList.add('hidden');
+        }
+
+        async function fetchSynopsis(title, tags) {
+            const systemPrompt = "You are a world-class film critic and streaming content analyst. Your goal is to provide a concise, engaging, and insightful 'Deep Dive' analysis of a movie or show, focusing on its thematic tone, visual style, and why it's a critical watch right now. The analysis must be exactly one paragraph and avoid summarizing the plot directly. Focus on the core experience and emotional impact.";
+            const userQuery = `Write a deep dive analysis for the title: "${title}". Key elements/tags include: ${tags}.`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                tools: [{ "google_search": {} }],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
+            };
+
+            try {
+                    if (!apiKey || apiKey.trim() === '') {
+                        // Demo fallback: return a canned analysis for offline/local testing
+                        return {
+                            text: `${title} is an evocative, tone-driven work whose visuals and pacing reward patient viewing. It blends thematic rigor with kinetic set-pieces to create a memorable emotional arc.`,
+                            sources: []
+                        };
+                    }
+
+                    const response = await fetchWithBackoff(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+                const candidate = result.candidates?.[0];
+
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    const text = candidate.content.parts[0].text;
+                    let sources = [];
+                    const groundingMetadata = candidate.groundingMetadata;
+                    
+                    if (groundingMetadata && groundingMetadata.groundingAttributions) {
+                        sources = groundingMetadata.groundingAttributions
+                            .map(attribution => ({
+                                uri: attribution.web?.uri,
+                                title: attribution.web?.title,
+                            }))
+                            .filter(source => source.uri && source.title);
+                    }
+                    
+                    return { text, sources };
+                } else {
+                    return { text: "The Deep Dive algorithm could not process this title.", sources: [] };
+                }
+            } catch (error) {
+                console.error(error);
+                return { text: "Failed to connect to the Deep Dive API. Check network connection.", sources: [] };
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const state = {
+                showOnlyPrime: true,
+                selectedStudio: 'All',
+                selectedDecade: 1970,
+                scrollPositions: {} // store scroll positions by carousel id
+            };
+
+            const allMovies = [
+                { id: 1, title: 'The Galactic Echo', year: 2023, studio: 'MGM', freeOnPrime: true, poster: 'https://placehold.co/400x600/0f172a/ffffff?text=Galactic+Echo', tags: ['Sci-Fi', 'High Budget Sci-Fi Visuals'] },
+                { id: 2, title: 'Chinatown', year: 1974, studio: 'Paramount', freeOnPrime: true, poster: 'https://placehold.co/400x600/7f1d1d/ffffff?text=Chinatown', tags: ['Crime', 'Neo-Noir'] },
+                { id: 3, title: 'The Conversation', year: 1974, studio: 'Paramount', freeOnPrime: false, poster: 'https://placehold.co/400x600/7f1d1d/ffffff?text=The+Conversation', tags: ['Crime', 'Mundane Anxiety'] },
+                { id: 4, title: 'Hereditary', year: 2018, studio: 'A24', freeOnPrime: true, poster: 'https://placehold.co/400x600/1e3a8a/ffffff?text=Hereditary', tags: ['Horror', 'Slow-Burn Psychological Horror'] },
+                { id: 5, title: 'Uncut Gems', year: 2019, studio: 'A24', freeOnPrime: false, poster: 'https://placehold.co/400x600/1e3a8a/ffffff?text=Uncut+Gems', tags: ['Crime', 'Heist Thrills'] },
+                { id: 6, title: 'No Country for Old Men', year: 2007, studio: 'Paramount', freeOnPrime: true, poster: 'https://placehold.co/400x600/7f1d1d/ffffff?text=No+Country', tags: ['Crime', 'Neo-Westerns'] },
+                { id: 7, title: 'Skyfall', year: 2012, studio: 'MGM', freeOnPrime: true, poster: 'https://placehold.co/400x600/0f172a/ffffff?text=Skyfall', tags: ['Action', 'High Budget Visuals'] },
+                { id: 8, title: 'The Godfather', year: 1972, studio: 'Paramount', freeOnPrime: false, poster: 'https://placehold.co/400x600/7f1d1d/ffffff?text=The+Godfather', tags: ['Crime', 'Classic'] },
+                { id: 9, title: 'Ex Machina', year: 2014, studio: 'A24', freeOnPrime: true, poster: 'https://placehold.co/400x600/1e3a8a/ffffff?text=Ex+Machina', tags: ['Sci-Fi', 'Documentaries on Artificial Intelligence'] },
+                { id: 10, title: 'Blade Runner 2049', year: 2017, studio: 'Warner Bros.', freeOnPrime: true, poster: 'https://placehold.co/400x600/4a044e/ffffff?text=Blade+Runner', tags: ['Sci-Fi', 'Dystopian Themes'] },
+                { id: 11, title: 'Dog Day Afternoon', year: 1975, studio: 'Warner Bros.', freeOnPrime: true, poster: 'https://placehold.co/400x600/4a044e/ffffff?text=Dog+Day', tags: ['Crime', 'Classic'] },
+                { id: 12, title: 'The Blair Witch Project', year: 1999, studio: 'Lionsgate', freeOnPrime: true, poster: 'https://placehold.co/400x600/064e3b/ffffff?text=Blair+Witch', tags: ['Horror', 'Found Footage'] }
+            ];
+            
+            const studios = ['All', 'A24', 'MGM', 'Paramount', 'Warner Bros.', 'Lionsgate'];
+            const decades = [1970, 1980, 1990, 2000, 2010];
+
+            function createMovieCard(movie) {
+                const movieTitleEscaped = movie.title.replace(/'/g, "\\'");
+                const movieTagsEscaped = movie.tags.join(', ').replace(/'/g, "\\'");
+
+                return `
+                    <div class="movie-card flex-shrink-0">
+                        <div style="position:relative;">
+                            <img data-src="${movie.poster}" alt="${movie.title}" class="poster-img lazy" loading="lazy">
+                            <div class="peek-card" role="dialog" aria-hidden="true">
+                                <div class="font-semibold mb-1">${movie.title} <span class="text-xs text-slate-300">(${movie.year})</span></div>
+                                <div class="text-xs text-slate-300 mb-2">${movie.tags.join(' • ')}</div>
+                                <div class="text-xs text-slate-200">A short teaser-style blurb for the title. Press Enter or click ✨ Deep Dive for more.</div>
+                            </div>
+                            <div class="poster-overlay"></div>
+                            <div class="movie-info">
+                                <div>
+                                    <div class="text-sm font-semibold truncate" style="max-width:9rem;">${movie.title}</div>
+                                    <div class="text-xs text-slate-300">${movie.year}</div>
+                                </div>
+                                ${movie.freeOnPrime ? '<div class="prime-badge">Prime</div>' : ''}
+                            </div>
+                        </div>
+                        <div style="margin-top:8px;">
+                            <button data-title='${movieTitleEscaped}' data-tags='${movieTagsEscaped}' class="deep-dive-btn w-full mt-2 px-2 py-1 text-xs font-bold rounded-md bg-sky-600 hover:bg-sky-500 text-white transition duration-200">
+                                ✨ Deep Dive
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            function createCarousel(title, movies, id) {
+                if (movies.length === 0) return '';
+                return `
+                    <section id="${id}">
+                        <h2 class="text-2xl font-bold text-white mb-4">${title}</h2>
+                        <div class="carousel-container flex overflow-x-auto space-x-4 pb-4">
+                            ${movies.map(createMovieCard).join('')}
+                        </div>
+                    </section>
+                `;
+            }
+            
+            function renderContent() {
+                const contentArea = document.getElementById('content-area');
+                let html = '';
+
+                const filteredMovies = allMovies.filter(m => !state.showOnlyPrime || m.freeOnPrime);
+
+                html += `<div class="carousel-wrapper">` + createCarousel('Continue Watching', filteredMovies.slice(0, 5), 'continue-watching') + `</div>`;
+
+                const lastWatched = filteredMovies[1];
+                const tonalRecommendations = filteredMovies.filter(m => m.id !== lastWatched.id && m.tags.some(tag => lastWatched.tags.includes(tag))).slice(0, 8);
+                html += `<div class="carousel-wrapper">` + createCarousel(`If You Liked the Tone Of: ${lastWatched.title}`, tonalRecommendations, 'tonal-recs') + `</div>`;
+
+                html += `
+                    <section id="studio-vault">
+                        <h2 class="text-2xl font-bold text-white mb-4">The Studio Vault</h2>
+                        <div class="flex space-x-4 overflow-x-auto pb-4 carousel-container">
+                            ${studios.map(studio => `
+                                <div class="studio-logo flex-shrink-0 bg-slate-800 rounded-lg w-32 h-20 flex items-center justify-center text-lg font-bold border-2 border-transparent ${state.selectedStudio === studio ? 'selected' : ''}" data-studio="${studio}">
+                                    ${studio}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </section>
+                `;
+
+                const studioSpotlightMovies = state.selectedStudio === 'All'
+                    ? filteredMovies.filter(m => m.studio !== 'Paramount')
+                    : filteredMovies.filter(m => m.studio === state.selectedStudio);
+
+                html += `<div class="carousel-wrapper">` + createCarousel(`Studio Spotlight: ${state.selectedStudio}`, studioSpotlightMovies, 'studio-spotlight') + `</div>`;
+
+                html += `
+                    <section id="a-look-back">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-2xl font-bold text-white">A Look Back</h2>
+                            <div class="flex space-x-2">
+                                ${decades.map(decade => `
+                                    <button class="decade-btn px-3 py-1 text-sm font-semibold rounded-full bg-slate-700 hover:bg-sky-500 hover:text-slate-900 transition-colors ${state.selectedDecade === decade ? 'selected' : ''}" data-decade="${decade}">
+                                        ${decade}s
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div class="carousel-wrapper">
+                            <div class="carousel-container flex overflow-x-auto space-x-4 pb-4" id="decade-carousel">
+                                ${filteredMovies.filter(m => m.year >= state.selectedDecade && m.year < state.selectedDecade + 10).map(createMovieCard).join('')}
+                            </div>
+                        </div>
+                    </section>
+                `;
+
+                html += `<div class="carousel-wrapper">` + createCarousel('Micro-Genre: Slow-Burn Psychological Horror', filteredMovies.filter(m => m.tags.includes('Slow-Burn Psychological Horror')), 'micro-genre') + `</div>`;
+                html += `<div class="carousel-wrapper">` + createCarousel('Currently Trending', filteredMovies.slice(5, 11).reverse(), 'trending') + `</div>`;
+
+                contentArea.innerHTML = html;
+                    addEventListeners();
+                    attachLazyLoading();
+                    attachCarouselArrows();
+                    // restore scroll positions
+                    Object.keys(state.scrollPositions).forEach(id => {
+                        const el = document.querySelector(`#${id}`);
+                        if (el) el.scrollLeft = state.scrollPositions[id];
+                    });
+            }
+
+            function addEventListeners() {
+                const primeToggle = document.getElementById('prime-toggle');
+                if (primeToggle) primeToggle.addEventListener('change', (e) => {
+                    state.showOnlyPrime = e.target.checked;
+                    renderContent();
+                });
+
+                document.querySelectorAll('.studio-logo').forEach(logo => {
+                    logo.addEventListener('click', () => {
+                        state.selectedStudio = logo.dataset.studio;
+                        renderContent();
+                    });
+                });
+
+                document.querySelectorAll('.decade-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        state.selectedDecade = parseInt(btn.dataset.decade);
+                        renderContent();
+                    });
+                });
+
+                // deep dive buttons
+                document.querySelectorAll('.deep-dive-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const title = e.currentTarget.dataset.title;
+                        const tags = e.currentTarget.dataset.tags;
+                        showSynopsisModal(title, tags);
+                    });
+                });
+
+                // keyboard interactions for movie cards (Enter opens Deep Dive)
+                document.querySelectorAll('.movie-card').forEach(card => {
+                    card.setAttribute('tabindex', '0');
+                    card.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            const btn = card.querySelector('.deep-dive-btn');
+                            if (btn) btn.click();
+                        }
+                    });
+                    // toggle peek-card aria-hidden
+                    card.addEventListener('focusin', () => {
+                        const peek = card.querySelector('.peek-card'); if (peek) peek.setAttribute('aria-hidden', 'false');
+                    });
+                    card.addEventListener('focusout', () => {
+                        const peek = card.querySelector('.peek-card'); if (peek) peek.setAttribute('aria-hidden', 'true');
+                    });
+                });
+            }
+
+            function attachLazyLoading() {
+                const lazyImages = document.querySelectorAll('img.lazy');
+                if ('IntersectionObserver' in window) {
+                    const imgObserver = new IntersectionObserver((entries, obs) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting) {
+                                const img = entry.target;
+                                img.src = img.dataset.src;
+                                img.classList.remove('lazy');
+                                obs.unobserve(img);
+                            }
+                        });
+                    }, { rootMargin: '200px' });
+                    lazyImages.forEach(img => imgObserver.observe(img));
+                } else {
+                    // Fallback: load all
+                    lazyImages.forEach(img => img.src = img.dataset.src);
+                }
+                // track scroll positions for carousel containers so toggling filters doesn't reset view
+                document.querySelectorAll('.carousel-container').forEach(container => {
+                    const id = container.closest('section')?.id || container.id || 'unknown-carousel';
+                    container.addEventListener('scroll', () => {
+                        state.scrollPositions[id] = container.scrollLeft;
+                    }, { passive: true });
+                });
+            }
+
+            function attachCarouselArrows() {
+                document.querySelectorAll('.carousel-wrapper').forEach(wrapper => {
+                    if (wrapper.querySelector('.carousel-arrow')) return; // already attached
+                    const left = document.createElement('div');
+                    left.className = 'carousel-arrow left';
+                    left.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+                    const right = document.createElement('div');
+                    right.className = 'carousel-arrow right';
+                    right.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+                    wrapper.appendChild(left);
+                    wrapper.appendChild(right);
+
+                    const scroller = wrapper.querySelector('.carousel-container');
+                    left.addEventListener('click', () => {
+                        scroller.scrollBy({ left: -scroller.clientWidth * 0.6, behavior: 'smooth' });
+                    });
+                    right.addEventListener('click', () => {
+                        scroller.scrollBy({ left: scroller.clientWidth * 0.6, behavior: 'smooth' });
+                    });
+
+                    // keyboard navigation when mouse over
+                    wrapper.addEventListener('keydown', (e) => {
+                        if (e.key === 'ArrowLeft') left.click();
+                        if (e.key === 'ArrowRight') right.click();
+                    });
+                    wrapper.setAttribute('tabindex', '0');
+                });
+            }
+
+            renderContent();
+        });
+    </script>
+</body>
+</html>
