@@ -161,7 +161,7 @@ async function fetchGameDataSmart(query) {
     inputDev.value = aiData.developer || "Unknown";
     inputGenre.value = aiData.genre || "Unknown";
     inputDesc.value = aiData.description || "";
-    inputHours.value = `${aiData.estimated_hours_main || "?"}h (Main) / ${aiData.estimated_hours_100 || "?"}h (100%)`;
+    inputHours.value = `${aiData.estimated_hours_main || "?"} (Main) / ${aiData.estimated_hours_100 || "?"} (100%)`;
 
     // 2. Populate Platforms
     platformChipsContainer.innerHTML = "";
