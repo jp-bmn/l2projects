@@ -28,7 +28,7 @@ const customGoalsList = document.getElementById("custom-goals-list");
 const inputNewGoal = document.getElementById("new-goal-text");
 const btnAddGoal = document.getElementById("btn-add-goal");
 
-// State for Modal
+// State
 let selectedPlatform = null;
 let customGoals = [];
 
@@ -45,18 +45,25 @@ btnOpenModal.addEventListener("click", () => {
 
 btnCloseModal.addEventListener("click", () => modal.classList.add("hidden"));
 
+// Press Enter to Search
+inputSearch.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    btnAiFetch.click();
+  }
+});
+
 btnAiFetch.addEventListener("click", async (e) => {
   e.preventDefault();
   const query = inputSearch.value.trim();
   if (!query) return;
-  await fetchGameData(query);
+  await fetchGameDataSmart(query);
 });
 
 btnSaveGame.addEventListener("click", addGameToLibrary);
 
 filterInput.addEventListener("input", (e) => {
-  const term = e.target.value.toLowerCase();
-  renderLibrary(term);
+  renderLibrary(e.target.value.toLowerCase());
 });
 
 inputCustomPlatform.addEventListener("change", (e) => {
@@ -77,7 +84,7 @@ btnAddGoal.addEventListener("click", () => {
 document.getElementById("game-form").addEventListener("change", validateForm);
 document.getElementById("game-form").addEventListener("keyup", validateForm);
 
-// --- Functions ---
+// --- Core Functions ---
 
 function resetModal() {
   inputSearch.value = "";
@@ -88,15 +95,12 @@ function resetModal() {
   inputDesc.value = "";
   inputImg.value = "";
   inputCustomPlatform.value = "";
-
   platformChipsContainer.innerHTML = "";
   selectedPlatform = null;
-
   document.querySelectorAll(".goal-check").forEach((c) => (c.checked = false));
   customGoalsList.innerHTML = "";
-  customGoals = [];
-
-  apiStatus.textContent = "Powered by AI. Enter title and click Auto-Fill.";
+  apiStatus.textContent =
+    "Powered by AI & SteamDB. Enter title and click Auto-Fill.";
   apiStatus.style.color = "#a0a0b0";
   validateForm();
 }
@@ -114,20 +118,13 @@ function createPlatformChip(name, selectImmediately = false) {
     validateForm();
   };
   platformChipsContainer.appendChild(chip);
-
-  if (selectImmediately) {
-    chip.click();
-  }
+  if (selectImmediately) chip.click();
 }
 
 function addCustomGoalToUI(text) {
   const div = document.createElement("div");
   div.className = "checkbox-container";
-  div.innerHTML = `
-        <input type="checkbox" value="${text}" class="goal-check" checked>
-        <span class="checkmark"></span>
-        ${text}
-    `;
+  div.innerHTML = `<input type="checkbox" value="${text}" class="goal-check" checked><span class="checkmark"></span>${text}`;
   div.querySelector("input").addEventListener("change", validateForm);
   customGoalsList.appendChild(div);
   validateForm();
@@ -136,97 +133,56 @@ function addCustomGoalToUI(text) {
 function validateForm() {
   const title = inputTitle.value.trim();
   const checks = document.querySelectorAll(".goal-check:checked");
-
-  if (title && selectedPlatform && checks.length > 0) {
-    btnSaveGame.disabled = false;
-  } else {
-    btnSaveGame.disabled = true;
-  }
+  btnSaveGame.disabled = !(title && selectedPlatform && checks.length > 0);
 }
 
-// --- API Logic ---
+// --- SMART API LOGIC (Gemini + Steam + Wiki) ---
 
-async function fetchGameData(query) {
-  if (!API_KEY || API_KEY.includes("YOUR_API_KEY")) {
-    apiStatus.textContent = "Error: Please paste your API Key in script.js";
+async function fetchGameDataSmart(query) {
+  if (!API_KEY || API_KEY.includes("YOUR")) {
+    apiStatus.textContent = "Error: Missing Gemini API Key in script.js";
     apiStatus.style.color = "var(--danger)";
     return;
   }
 
-  apiStatus.textContent = "Summoning AI... please wait.";
+  apiStatus.textContent = "Searching Databases...";
   apiStatus.style.color = "var(--accent)";
   btnAiFetch.disabled = true;
 
-  // Using gemini-pro which is generally more stable for general queries
-  // If this fails, try swapping 'gemini-pro' with 'gemini-1.5-flash'
-  const MODEL_NAME = "gemini-2.5-flash";
-
-  const prompt = `Return a raw JSON object (no markdown formatting) for the video game "${query}". 
-    Fields: title, developer, genre, description (max 2 sentences), platforms (array of strings), estimated_hours_main (string), estimated_hours_100 (string). 
-    If unknown, use "Unknown".`;
-
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-        }),
-      },
-    );
+    // Run Text (AI) and Image (Steam/Wiki) searches in parallel
+    const [aiData, smartImage] = await Promise.all([
+      callGeminiForStats(query),
+      fetchSmartImage(query),
+    ]);
 
-    if (!response.ok) {
-      const errData = await response.json();
-      throw new Error(errData.error?.message || response.statusText);
-    }
+    // 1. Populate Text from Gemini
+    inputTitle.value = aiData.title || query;
+    inputDev.value = aiData.developer || "Unknown";
+    inputGenre.value = aiData.genre || "Unknown";
+    inputDesc.value = aiData.description || "";
+    inputHours.value = `${aiData.estimated_hours_main || "?"}h (Main) / ${aiData.estimated_hours_100 || "?"}h (100%)`;
 
-    const data = await response.json();
-
-    // Safety check to ensure the structure exists
-    if (
-      !data.candidates ||
-      !data.candidates[0] ||
-      !data.candidates[0].content
-    ) {
-      throw new Error("AI returned an unexpected structure.");
-    }
-
-    const textRes = data.candidates[0].content.parts[0].text;
-
-    // Sanitize JSON string (remove markdown ```json ... ```)
-    const jsonString = textRes
-      .replace(/```json/g, "")
-      .replace(/```/g, "")
-      .trim();
-
-    let gameInfo;
-    try {
-      gameInfo = JSON.parse(jsonString);
-    } catch (e) {
-      throw new Error("Failed to parse AI response. Try again.");
-    }
-
-    // Populate Fields
-    inputTitle.value = gameInfo.title || query;
-    inputDev.value = gameInfo.developer || "Unknown";
-    inputGenre.value = gameInfo.genre || "Unknown";
-    inputDesc.value = gameInfo.description || "";
-    inputHours.value = `${gameInfo.estimated_hours_main || "?"}h (Main) / ${gameInfo.estimated_hours_100 || "?"}h (100%)`;
-
-    // Clear and fill platforms
+    // 2. Populate Platforms
     platformChipsContainer.innerHTML = "";
-    const platforms = Array.isArray(gameInfo.platforms)
-      ? gameInfo.platforms
+    const platforms = Array.isArray(aiData.platforms)
+      ? aiData.platforms
       : ["PC", "Console"];
     platforms.forEach((p) => createPlatformChip(p));
 
-    apiStatus.textContent = "Data fetched successfully!";
-    apiStatus.style.color = "var(--success)";
+    // 3. Populate Image
+    if (smartImage) {
+      inputImg.value = smartImage;
+      apiStatus.textContent = "Success! Data & Art Found.";
+      apiStatus.style.color = "var(--success)";
+    } else {
+      inputImg.value = ""; // Clear it so gradient takes over
+      apiStatus.textContent = "Data found. No image available (using default).";
+      apiStatus.style.color = "#fb8c00"; // Orange
+    }
   } catch (error) {
-    console.error("Game Rack API Error:", error);
-    apiStatus.textContent = `Error: ${error.message}`;
+    console.error("Fetch Error:", error);
+    apiStatus.textContent = "Error fetching data. Try manually.";
     apiStatus.style.color = "var(--danger)";
   } finally {
     btnAiFetch.disabled = false;
@@ -234,7 +190,99 @@ async function fetchGameData(query) {
   }
 }
 
-// --- Card Logic ---
+// Helper: Call Gemini
+async function callGeminiForStats(query) {
+  const models = ["gemini-2.5-flash", "gemini-2.5-pro"];
+  const prompt = `Return a raw JSON object (no markdown) for game "${query}". Fields: title, developer, genre, description (max 2 sentences), platforms (array of strings), estimated_hours_main (string), estimated_hours_100 (string). Use "Unknown" if unsure.`;
+
+  for (const model of models) {
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+        },
+      );
+      if (!res.ok) continue;
+      const data = await res.json();
+      const text = data.candidates[0].content.parts[0].text
+        .replace(/```json/g, "")
+        .replace(/```/g, "")
+        .trim();
+      return JSON.parse(text);
+    } catch (e) {
+      console.log(`Model ${model} failed, trying next...`);
+    }
+  }
+  throw new Error("All AI models failed.");
+}
+
+// Helper: Smart Image Fetcher (Steam -> Wiki -> Null)
+async function fetchSmartImage(query) {
+  // 1. Try CheapShark (which maps to Steam)
+  try {
+    const steamImg = await getSteamImage(query);
+    if (steamImg) return steamImg;
+  } catch (e) {
+    console.log("Steam fetch failed, trying Wiki...");
+  }
+
+  // 2. Fallback to Wikipedia
+  try {
+    const wikiImg = await getWikiImage(query);
+    if (wikiImg) return wikiImg;
+  } catch (e) {
+    console.log("Wiki fetch failed");
+  }
+
+  return null;
+}
+
+// Sub-helper: CheapShark -> Steam
+async function getSteamImage(query) {
+  // CheapShark is free, keyless, and CORS friendly
+  const res = await fetch(
+    `https://www.cheapshark.com/api/1.0/games?title=${encodeURIComponent(query)}&limit=1`,
+  );
+  const data = await res.json();
+
+  if (data && data.length > 0) {
+    const steamAppID = data[0].steamAppID;
+    if (steamAppID) {
+      // Construct official Steam Header URL (High Reliability)
+      return `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${steamAppID}/header.jpg`;
+    }
+  }
+  return null;
+}
+
+// Sub-helper: Wikipedia
+async function getWikiImage(query) {
+  // Search
+  const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query + " video game")}&format=json&origin=*`;
+  const searchRes = await fetch(searchUrl);
+  const searchData = await searchRes.json();
+
+  if (!searchData.query.search || searchData.query.search.length === 0)
+    return null;
+
+  const pageId = searchData.query.search[0].pageid;
+
+  // Get Image
+  const imgUrl = `https://en.wikipedia.org/w/api.php?action=query&prop=pageimages&pageids=${pageId}&pithumbsize=600&format=json&origin=*`;
+  const imgRes = await fetch(imgUrl);
+  const imgData = await imgRes.json();
+
+  const page = imgData.query.pages[pageId];
+  if (page.thumbnail && page.thumbnail.source) {
+    return page.thumbnail.source;
+  }
+  return null;
+}
+
+// --- Library Logic ---
 
 function addGameToLibrary() {
   const goalInputs = document.querySelectorAll(".goal-check:checked");
@@ -246,11 +294,11 @@ function addGameToLibrary() {
   const newGame = {
     id: Date.now(),
     title: inputTitle.value,
-    developer: inputDev.value || "Unknown",
-    genre: inputGenre.value || "Unknown",
-    hours: inputHours.value || "N/A",
-    description: inputDesc.value || "",
-    image: inputImg.value || null,
+    developer: inputDev.value,
+    genre: inputGenre.value,
+    hours: inputHours.value,
+    description: inputDesc.value,
+    image: inputImg.value,
     platform: selectedPlatform,
     goals: goals,
     satisfaction: 0,
@@ -263,7 +311,6 @@ function addGameToLibrary() {
 
 function renderLibrary(filterText = "") {
   grid.innerHTML = "";
-
   countDisplay.textContent = gameLibrary.length;
 
   const filtered = gameLibrary.filter(
@@ -288,7 +335,8 @@ function renderLibrary(filterText = "") {
 
     const completedCount = game.goals.filter((g) => g.completed).length;
     const totalCount = game.goals.length;
-    const percent = Math.round((completedCount / totalCount) * 100);
+    const percent =
+      totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
 
     card.innerHTML = `
             <div class="card-header" style="${bgStyle}">
@@ -301,7 +349,7 @@ function renderLibrary(filterText = "") {
                     <span>${game.genre}</span>
                 </div>
                 <p class="card-desc">${game.description}</p>
-                <div class="card-meta">Est: ${game.hours}</div>
+                <div class="card-meta"><i class="fa-regular fa-clock"></i> ${game.hours}</div>
 
                 <div class="progression-section">
                     <div class="progress-header">
@@ -326,21 +374,16 @@ function renderLibrary(filterText = "") {
       const goalDiv = document.createElement("div");
       goalDiv.className = `goal-item ${goal.completed ? "completed" : ""}`;
       goalDiv.innerHTML = `<i class="fa-regular ${goal.completed ? "fa-square-check" : "fa-square"}"></i> ${goal.text}`;
-
-      goalDiv.addEventListener("click", () => {
-        toggleGoal(game.id, index);
-      });
-
+      goalDiv.addEventListener("click", () => toggleGoal(game.id, index));
       goalListContainer.appendChild(goalDiv);
     });
 
     const slider = card.querySelector(".sat-slider");
     slider.addEventListener("input", (e) => {
       game.satisfaction = e.target.value;
-      card.querySelector(`#sat-val-${game.id}`).textContent =
-        `${e.target.value}%`;
-      const val = parseInt(e.target.value);
       const valSpan = card.querySelector(`#sat-val-${game.id}`);
+      valSpan.textContent = `${e.target.value}%`;
+      const val = parseInt(e.target.value);
       if (val > 50) valSpan.style.color = "var(--success)";
       else if (val < -50) valSpan.style.color = "var(--danger)";
       else valSpan.style.color = "var(--accent)";
