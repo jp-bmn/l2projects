@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Rack | Smart Backlog Manager</title>
+    <link rel="stylesheet" href="styles-final.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- Header & Nav -->
+    <header>
+        <div class="logo-area">
+            <i class="fa-solid fa-gamepad"></i>
+            <h1>GAME RACK</h1>
+        </div>
+        <div class="header-actions">
+            <div class="stats-bar">
+                <span>Library: <b id="count-display">0</b>/25</span>
+            </div>
+            <button id="btn-open-quiz" class="btn-quiz">
+                <i class="fa-solid fa-clipboard-question"></i> Personality Quiz
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Controls -->
+    <section class="controls">
+        <div class="search-filter-container">
+            <i class="fa-solid fa-filter"></i>
+            <input type="text" id="filter-input" placeholder="Filter by Title, Genre, or Platform...">
+        </div>
+        <div class="control-buttons">
+            <select id="sort-dropdown" class="sort-select">
+                <option value="score">Sort: Best Match (AI)</option>
+                <option value="title">Sort: Title A-Z</option>
+                <option value="hours">Sort: Shortest First</option>
+                <option value="added">Sort: Recently Added</option>
+            </select>
+            <button id="btn-open-modal" class="btn-primary">
+                <i class="fa-solid fa-plus"></i> Add Game
+            </button>
+        </div>
+    </section>
+
+    <!-- Game Grid -->
+    <main id="game-grid" class="grid-container">
+        <div id="empty-state" class="empty-state">
+            <p>Your rack is empty. Defeat indecisiveness by adding a game.</p>
+        </div>
+    </main>
+
+    <!-- Personality Quiz Modal -->
+    <div id="quiz-modal" class="modal-overlay hidden">
+        <div class="quiz-modal-container">
+            <!-- Quiz content will be injected here -->
+            <div id="quiz-content"></div>
+        </div>
+    </div>
+
+    <!-- Add Game Modal -->
+    <div id="modal-overlay" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Add New Title</h2>
+                <button id="btn-close-modal" class="close-icon"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- AI Search Section -->
+                <div class="search-section">
+                    <label>Search Game (AI Auto-Fill)</label>
+                    <div class="input-group">
+                        <input type="text" id="game-search-input" placeholder="E.g., Elden Ring">
+                        <button id="btn-ai-fetch" class="btn-secondary"><i class="fa-solid fa-wand-magic-sparkles"></i> Auto-Fill</button>
+                    </div>
+                    <small id="api-status">Powered by AI. Enter title and click Auto-Fill.</small>
+                </div>
+
+                <hr class="divider">
+
+                <!-- Form Data -->
+                <form id="game-form">
+                    <div class="row">
+                        <div class="col">
+                            <label>Title</label>
+                            <input type="text" id="input-title" required>
+                        </div>
+                        <div class="col">
+                            <label>Developer</label>
+                            <input type="text" id="input-dev">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col">
+                            <label>Genre</label>
+                            <input type="text" id="input-genre">
+                        </div>
+                        <div class="col">
+                            <label>Est. Hours (Main / 100%)</label>
+                            <input type="text" id="input-hours" placeholder="e.g. 20h / 60h">
+                        </div>
+                    </div>
+
+                    <div class="full-width">
+                        <label>Description</label>
+                        <textarea id="input-desc" rows="2"></textarea>
+                    </div>
+
+                    <div class="full-width">
+                        <label>Image URL (Optional)</label>
+                        <input type="text" id="input-img" placeholder="https://...">
+                    </div>
+
+                    <!-- Platforms -->
+                    <div class="full-width">
+                        <label>Platform (Select One)</label>
+                        <div class="platform-selector" id="platform-container">
+                            <div class="chip-group" id="platform-chips"></div>
+                            <input type="text" id="custom-platform" placeholder="+ Add Custom Platform">
+                        </div>
+                    </div>
+
+                    <!-- Completion Goals -->
+                    <div class="full-width">
+                        <label>Completion Conditions <span class="required">*Select at least one</span></label>
+                        <div class="goals-container">
+                            <label class="checkbox-container">
+                                <input type="checkbox" value="Complete Main Story" class="goal-check">
+                                <span class="checkmark"></span>
+                                Complete Main Story
+                            </label>
+                            <label class="checkbox-container">
+                                <input type="checkbox" value="Obtain All Achievements" class="goal-check">
+                                <span class="checkmark"></span>
+                                Obtain All Achievements/Trophies
+                            </label>
+                            <div id="custom-goals-list"></div>
+                            
+                            <div class="add-custom-goal">
+                                <input type="text" id="new-goal-text" placeholder="Add custom goal...">
+                                <button type="button" id="btn-add-goal"><i class="fa-solid fa-plus"></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Options -->
+                    <div class="advanced-section">
+                        <button type="button" class="btn-text" id="btn-toggle-advanced">
+                            <i class="fa-solid fa-chevron-down"></i> Advanced Options (for AI scoring)
+                        </button>
+                        <div id="advanced-fields" class="hidden">
+                            <div class="row">
+                                <div class="col">
+                                    <label>Critical Score (0-100)</label>
+                                    <input type="number" id="input-critic-score" min="0" max="100" placeholder="85">
+                                </div>
+                                <div class="col">
+                                    <label>Your Hype Level (0-10)</label>
+                                    <input type="number" id="input-hype" min="0" max="10" placeholder="8">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <label class="checkbox-container" style="padding-left: 0;">
+                                        <input type="checkbox" id="input-friend-rec">
+                                        <span class="checkmark"></span>
+                                        Friend Recommended
+                                    </label>
+                                </div>
+                                <div class="col">
+                                    <label class="checkbox-container" style="padding-left: 0;">
+                                        <input type="checkbox" id="input-fav-series">
+                                        <span class="checkmark"></span>
+                                        Favorite Series
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button id="btn-save-game" class="btn-primary" disabled>Add Game to Rack</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script-final.js"></script>
+</body>
+</html>
