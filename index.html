@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Rack | Backlog Manager</title>
+    <title>Game Rack | Smart Backlog Manager</title>
     <link rel="stylesheet" href="styles.css">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 <body>
 
@@ -18,17 +20,49 @@
             <i class="fa-solid fa-gamepad"></i>
             <h1>GAME RACK</h1>
         </div>
-        <div class="stats-bar">
-            <span>Library: <b id="count-display">0</b>/25</span>
+        <div class="header-actions">
+            <div class="stats-bar">
+                <span>Library: <b id="count-display">0</b>/25</span>
+            </div>
+            <button id="btn-open-quiz" class="btn-quiz">
+                <i class="fa-solid fa-clipboard-question"></i> Find Me A Game
+            </button>
         </div>
     </header>
 
     <!-- Main Controls -->
     <section class="controls">
-        <div class="search-filter-container">
-            <i class="fa-solid fa-filter"></i>
-            <input type="text" id="filter-input" placeholder="Filter by Title, Genre, or Platform...">
+        <div class="filter-bar">
+            <div class="search-wrapper">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="filter-text" placeholder="Search titles...">
+            </div>
+            
+            <div class="filter-group">
+                <select id="filter-platform" class="filter-select">
+                    <option value="all">All Platforms</option>
+                    <option value="PC">PC</option>
+                    <option value="PlayStation">PlayStation</option>
+                    <option value="Xbox">Xbox</option>
+                    <option value="Nintendo">Nintendo</option>
+                    <option value="Mobile">Mobile</option>
+                </select>
+
+                <select id="filter-status" class="filter-select">
+                    <option value="all">All Statuses</option>
+                    <option value="incomplete">In Progress</option>
+                    <option value="completed">Completed</option>
+                </select>
+
+                <select id="sort-dropdown" class="filter-select">
+                    <option value="added">Sort: Recently Added</option>
+                    <option value="title">Sort: Title A-Z</option>
+                    <option value="hours">Sort: Shortest First</option>
+                    <option value="satisfaction">Sort: Satisfaction</option>
+                </select>
+            </div>
         </div>
+
         <button id="btn-open-modal" class="btn-primary">
             <i class="fa-solid fa-plus"></i> Add Game
         </button>
@@ -36,17 +70,23 @@
 
     <!-- Game Grid -->
     <main id="game-grid" class="grid-container">
-        <!-- Cards will be injected here via JS -->
         <div id="empty-state" class="empty-state">
             <p>Your rack is empty. Defeat indecisiveness by adding a game.</p>
         </div>
     </main>
 
-    <!-- Modal Overlay -->
+    <!-- Personality Quiz Modal -->
+    <div id="quiz-modal" class="modal-overlay hidden">
+        <div class="quiz-modal-container">
+            <div id="quiz-content"></div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Game Modal -->
     <div id="modal-overlay" class="modal-overlay hidden">
         <div class="modal">
             <div class="modal-header">
-                <h2>Add New Title</h2>
+                <h2 id="modal-title">Add New Title</h2>
                 <button id="btn-close-modal" class="close-icon"><i class="fa-solid fa-xmark"></i></button>
             </div>
             
@@ -101,10 +141,7 @@
                     <div class="full-width">
                         <label>Platform (Select One)</label>
                         <div class="platform-selector" id="platform-container">
-                            <!-- Injected via JS or manually filled below as fallback -->
-                            <div class="chip-group" id="platform-chips">
-                                <!-- Chips added dynamically -->
-                            </div>
+                            <div class="chip-group" id="platform-chips"></div>
                             <input type="text" id="custom-platform" placeholder="+ Add Custom Platform">
                         </div>
                     </div>
