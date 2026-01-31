@@ -29,7 +29,6 @@ const validPlatforms = [
   "steam deck",
 ];
 
-// Map quiz values to proper display names
 const platformDisplayMap = {
   pc: "PC",
   ps5: "PlayStation 5",
@@ -51,6 +50,12 @@ const grid = document.getElementById("game-grid");
 const countDisplay = document.getElementById("count-display");
 const apiStatus = document.getElementById("api-status");
 const modalTitle = document.getElementById("modal-title");
+
+// Random Game
+const btnRandomMenu = document.getElementById("btn-random-menu");
+const randomModal = document.getElementById("random-modal");
+const btnCloseRandom = document.getElementById("btn-close-random");
+const randomBody = document.getElementById("random-body");
 
 // Filters
 const filterText = document.getElementById("filter-text");
@@ -101,6 +106,15 @@ btnOpenModal.addEventListener("click", () => {
 });
 
 btnCloseModal.addEventListener("click", () => modal.classList.add("hidden"));
+
+// Random Modal Listeners
+btnRandomMenu.addEventListener("click", () => {
+  randomModal.classList.remove("hidden");
+  showRandomChoices();
+});
+btnCloseRandom.addEventListener("click", () =>
+  randomModal.classList.add("hidden"),
+);
 
 btnAiFetch.addEventListener("click", async (e) => {
   e.preventDefault();
@@ -188,6 +202,302 @@ function validateForm() {
   const checks = document.querySelectorAll(".goal-check:checked");
   btnSaveGame.disabled = !(title && selectedPlatform && checks.length > 0);
 }
+
+// --- RANDOM PICKER LOGIC ---
+function showRandomChoices() {
+  randomBody.innerHTML = `
+        <div style="text-align: center; margin-bottom: 20px;">
+            <p style="color: var(--text-muted);">Decisions are hard. Let Game Rack decide for you.</p>
+        </div>
+        <div class="random-choices">
+            <button class="btn-big-choice" onclick="pickRandomFromLibrary()">
+                <i class="fa-solid fa-layer-group"></i>
+                From My Collection
+            </button>
+            <button class="btn-big-choice" onclick="pickTotallyRandom()">
+                <i class="fa-solid fa-dice"></i>
+                Totally Random
+            </button>
+        </div>
+    `;
+}
+
+function pickRandomFromLibrary() {
+  if (gameLibrary.length === 0) {
+    randomBody.innerHTML = `
+            <div style="text-align: center; padding: 40px;">
+                <i class="fa-solid fa-box-open" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 15px;"></i>
+                <h3>Your Rack is Empty</h3>
+                <p>Add some games first!</p>
+                <button class="btn-primary" onclick="randomModal.classList.add('hidden')" style="margin-top: 20px;">Close</button>
+            </div>
+        `;
+    return;
+  }
+
+  const randomIndex = Math.floor(Math.random() * gameLibrary.length);
+  const game = gameLibrary[randomIndex];
+
+  // Render the specific card inside the modal with EDIT BUTTON
+  const bgUrl = game.image && game.image !== "" ? game.image : PLACEHOLDER_IMG;
+  const bgStyle = `background-image: url('${bgUrl}');`;
+  const completedCount = game.goals.filter((g) => g.completed).length;
+  const totalCount = game.goals.length;
+  const percent =
+    totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
+
+  randomBody.innerHTML = `
+        <div class="game-card" style="margin: 0 auto; max-width: 350px;">
+            <div class="card-header" style="${bgStyle}">
+                <div class="platform-badge">${game.platform}</div>
+                <!-- Added Edit Button for Random Card -->
+                <div class="card-actions" style="top:10px; right:10px;">
+                    <button class="btn-icon-card btn-edit-card" onclick="editGame(${game.id}); randomModal.classList.add('hidden');"><i class="fa-solid fa-pen"></i></button>
+                </div>
+                ${game.isComplete ? '<div class="completed-sash">COMPLETE</div>' : ""}
+            </div>
+            <div class="card-body">
+                <h3 class="card-title">${game.title}</h3>
+                <div class="card-meta">
+                    <span>${game.developer}</span>
+                    <span>${game.genre}</span>
+                </div>
+                <p class="card-desc">${game.description}</p>
+                <div class="card-meta"><i class="fa-regular fa-clock"></i> ${game.hours}</div>
+                <div class="progression-section">
+                    <div class="progress-header"><span>Progress</span><span>${percent}%</span></div>
+                    <div class="progress-bar-bg"><div class="progress-fill" style="width: ${percent}%"></div></div>
+                    <div class="goals-list" id="rand-goals-${game.id}"></div>
+                </div>
+                <div class="satisfaction-wrapper">
+                    <label class="satisfaction-label">Satisfaction: <span class="sat-value" id="rand-sat-val">${game.satisfaction}%</span></label>
+                    <input type="range" min="-100" max="100" value="${game.satisfaction}" class="sat-slider" onchange="updateSat(${game.id}, this.value); document.getElementById('rand-sat-val').textContent = this.value + '%'">
+                </div>
+            </div>
+        </div>
+        <div style="text-align: center; margin-top: 20px;">
+            <button class="btn-secondary" onclick="showRandomChoices()">Back</button>
+            <button class="btn-primary" onclick="pickRandomFromLibrary()">Spin Again</button>
+        </div>
+    `;
+
+  // Re-bind goal clicks for the modal view
+  const goalListContainer = document.getElementById(`rand-goals-${game.id}`);
+  game.goals.forEach((goal, index) => {
+    const goalDiv = document.createElement("div");
+    goalDiv.className = `goal-item ${goal.completed ? "completed" : ""}`;
+    goalDiv.innerHTML = `<i class="fa-regular ${goal.completed ? "fa-square-check" : "fa-square"}"></i> ${goal.text}`;
+
+    goalDiv.addEventListener("click", () => {
+      // Update logic locally and globally
+      toggleGoal(game.id, index);
+      // Re-render this specific random view to show update
+      pickRandomFromLibraryReRender(game);
+    });
+    goalListContainer.appendChild(goalDiv);
+  });
+}
+
+function pickRandomFromLibraryReRender(game) {
+  // Helper to just refresh the goals without re-rolling the random number
+  const goalListContainer = document.getElementById(`rand-goals-${game.id}`);
+  goalListContainer.innerHTML = "";
+
+  // Recalculate percent
+  const completedCount = game.goals.filter((g) => g.completed).length;
+  const totalCount = game.goals.length;
+  const percent =
+    totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
+
+  // Update bar
+  goalListContainer.parentElement.querySelector(".progress-fill").style.width =
+    `${percent}%`;
+  goalListContainer.parentElement.querySelector(
+    ".progress-header span:last-child",
+  ).textContent = `${percent}%`;
+
+  game.goals.forEach((goal, index) => {
+    const goalDiv = document.createElement("div");
+    goalDiv.className = `goal-item ${goal.completed ? "completed" : ""}`;
+    goalDiv.innerHTML = `<i class="fa-regular ${goal.completed ? "fa-square-check" : "fa-square"}"></i> ${goal.text}`;
+    goalDiv.addEventListener("click", () => {
+      toggleGoal(game.id, index);
+      pickRandomFromLibraryReRender(game);
+    });
+    goalListContainer.appendChild(goalDiv);
+  });
+}
+
+async function pickTotallyRandom() {
+  randomBody.innerHTML = `
+        <div style="text-align:center; padding: 40px;">
+            <i class="fa-solid fa-spinner fa-spin" style="font-size:3rem; color:var(--accent);"></i>
+            <h3>Consulting the Oracle...</h3>
+        </div>
+    `;
+
+  try {
+    const prompt = `Suggest one random, highly-rated video game from the last 20 years. JSON format: {title, developer, genre, description, estimated_hours_main}`;
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+      },
+    );
+    const data = await res.json();
+    const text = data.candidates[0].content.parts[0].text
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .trim();
+    const gameInfo = JSON.parse(text);
+
+    // Fetch Image
+    const img = await fetchSmartImage(gameInfo.title);
+    const finalImg = img || PLACEHOLDER_IMG;
+    const safeTitle = gameInfo.title
+      .replace(/'/g, "\\'")
+      .replace(/"/g, "&quot;");
+
+    // Render Card with Platform Dropdown
+    randomBody.innerHTML = `
+            <div class="game-card" style="margin: 0 auto; max-width: 350px;">
+                <div class="card-header" style="background-image: url('${finalImg}');"></div>
+                <div class="card-body">
+                    <h3 class="card-title">${gameInfo.title}</h3>
+                    <div class="card-meta">
+                        <span>${gameInfo.developer}</span>
+                        <span>${gameInfo.genre}</span>
+                    </div>
+                    <p class="card-desc">${gameInfo.description}</p>
+                    <div class="card-meta"><i class="fa-regular fa-clock"></i> ${gameInfo.estimated_hours_main}</div>
+                    
+                    <div style="margin-top:15px;">
+                        <label style="color:var(--accent);">Select Platform to Add:</label>
+                        <select id="random-platform-select" class="random-platform-select" onchange="enableRandomAdd()">
+                            <option value="">-- Choose Platform --</option>
+                            <option value="PC">PC</option>
+                            <option value="PlayStation 5">PlayStation 5</option>
+                            <option value="PlayStation 4">PlayStation 4</option>
+                            <option value="Nintendo Switch">Nintendo Switch</option>
+                            <option value="Xbox Series X/S">Xbox Series X/S</option>
+                            <option value="Mobile">Mobile</option>
+                        </select>
+                    </div>
+
+                    <button id="btn-confirm-random" class="btn-primary" disabled style="width:100%; justify-content:center;" onclick='addRecToLib("${safeTitle}", "${finalImg}", true)'>
+                        <i class="fa-solid fa-plus"></i> Add to Rack
+                    </button>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn-secondary" onclick="showRandomChoices()">Back</button>
+                <button class="btn-secondary" onclick="pickTotallyRandom()">Try Another</button>
+            </div>
+        `;
+  } catch (e) {
+    console.error(e);
+    randomBody.innerHTML = `<div style="text-align:center; padding:20px;"><h3>Failed to fetch. Try again.</h3><button class="btn-secondary" onclick="showRandomChoices()">Back</button></div>`;
+  }
+}
+
+// Logic to enable the button only when platform is selected
+window.enableRandomAdd = () => {
+  const select = document.getElementById("random-platform-select");
+  const btn = document.getElementById("btn-confirm-random");
+  if (select.value) {
+    btn.disabled = false;
+    btn.style.filter = "none";
+  } else {
+    btn.disabled = true;
+    btn.style.filter = "grayscale(1)";
+  }
+};
+
+// Updated Add Function to handle the manual platform override
+window.addRecToLib = async (title, image, isRandomAdd = false) => {
+  if (gameLibrary.length >= MAX_CARDS) {
+    alert("Library full! Cannot add more games.");
+    return;
+  }
+
+  let platform = quizAnswers.platform;
+
+  // If coming from the random picker, get the platform from the dropdown
+  if (isRandomAdd) {
+    const dropdown = document.getElementById("random-platform-select");
+    if (dropdown && dropdown.value) {
+      platform = dropdown.value;
+    } else {
+      return; // Should be blocked by disabled button, but safety check
+    }
+  }
+
+  // UX Feedback (if button exists)
+  const btn = document.querySelector(
+    `button[onclick*="${title.replace(/'/g, "\\'")}"]`,
+  );
+  if (btn) {
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Fetching Info...`;
+    btn.disabled = true;
+  }
+
+  try {
+    // Full Fetch to populate details (Dev, Genre, Hours)
+    const aiData = await callGeminiForStats(title);
+
+    // Correct Platform Display Name Mapping (if coming from quiz)
+    const displayPlatform = platformDisplayMap[platform] || platform || "PC";
+
+    const newGame = {
+      id: Date.now(),
+      title: title,
+      developer: aiData.developer || "Unknown",
+      genre: aiData.genre || "Unknown",
+      hours: aiData.estimated_hours_main || "N/A",
+      description: aiData.description || "Recommended via Game Rack",
+      image: image,
+      platform: displayPlatform,
+      goals: [{ text: "Complete Main Story", completed: false }],
+      satisfaction: 0,
+      isComplete: false,
+    };
+
+    gameLibrary.push(newGame);
+    saveLibrary();
+    renderLibrary();
+
+    if (isRandomAdd) {
+      randomModal.classList.add("hidden");
+      alert(`${title} added to your Rack on ${displayPlatform}!`);
+    } else if (btn) {
+      btn.innerHTML = `<i class="fa-solid fa-check"></i> Added`;
+      btn.style.background = "var(--success)";
+    }
+  } catch (e) {
+    console.error("Failed to fetch full details for rec", e);
+    // Fallback add
+    const fallbackPlatform = platformDisplayMap[platform] || platform || "PC";
+    const fallbackGame = {
+      id: Date.now(),
+      title: title,
+      developer: "Unknown",
+      genre: "Unknown",
+      hours: "Unknown",
+      description: "Recommended via Game Rack",
+      image: image,
+      platform: fallbackPlatform,
+      goals: [{ text: "Complete Main Story", completed: false }],
+      satisfaction: 0,
+      isComplete: false,
+    };
+    gameLibrary.push(fallbackGame);
+    saveLibrary();
+    renderLibrary();
+    if (isRandomAdd) randomModal.classList.add("hidden");
+  }
+};
 
 // --- CORE LIBRARY LOGIC ---
 
@@ -400,9 +710,12 @@ function updateSat(id, val) {
   if (g) {
     g.satisfaction = parseInt(val);
     saveLibrary();
-    document.getElementById(`sat-val-${id}`).textContent = `${val}%`;
 
-    // Auto-update sort if currently filtering by satisfaction
+    // Update Grid View
+    const gridVal = document.getElementById(`sat-val-${id}`);
+    if (gridVal) gridVal.textContent = `${val}%`;
+
+    // Update Auto-Sort if needed
     if (sortDropdown.value === "satisfaction") {
       renderLibrary();
     }
@@ -655,77 +968,6 @@ function renderRecommendations(games) {
   html += `</div></div>`;
   quizContent.innerHTML = html;
 }
-
-// Full Fetch Add for Recommendations
-window.addRecToLib = async (title, image) => {
-  if (gameLibrary.length >= MAX_CARDS) {
-    alert("Library full! Cannot add more games.");
-    return;
-  }
-
-  // UX Feedback
-  const btn = document.querySelector(
-    `button[onclick*="${title.replace(/'/g, "\\'")}"]`,
-  );
-  if (btn) {
-    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Fetching Info...`;
-    btn.disabled = true;
-  }
-
-  try {
-    // Full Fetch to populate details (Dev, Genre, Hours)
-    const aiData = await callGeminiForStats(title);
-
-    // Correct Platform Display Name Mapping
-    const displayPlatform =
-      platformDisplayMap[quizAnswers.platform] || quizAnswers.platform;
-
-    const newGame = {
-      id: Date.now(),
-      title: title,
-      developer: aiData.developer || "Unknown",
-      genre: aiData.genre || "Unknown",
-      hours: aiData.estimated_hours_main || "N/A",
-      description: aiData.description || "Recommended via Game Rack Quiz",
-      image: image,
-      platform: displayPlatform, // Mapped Name (e.g., "Nintendo Switch")
-      goals: [{ text: "Complete Main Story", completed: false }],
-      satisfaction: 0,
-      isComplete: false,
-    };
-
-    gameLibrary.push(newGame);
-    saveLibrary();
-    renderLibrary();
-
-    if (btn) {
-      btn.innerHTML = `<i class="fa-solid fa-check"></i> Added`;
-      btn.style.background = "var(--success)";
-    }
-  } catch (e) {
-    console.error("Failed to fetch full details for rec", e);
-    // Fallback add if API fails
-    const fallbackPlatform =
-      platformDisplayMap[quizAnswers.platform] || quizAnswers.platform;
-
-    const fallbackGame = {
-      id: Date.now(),
-      title: title,
-      developer: "Unknown",
-      genre: "Unknown",
-      hours: "Unknown",
-      description: "Recommended via Game Rack Quiz",
-      image: image,
-      platform: fallbackPlatform,
-      goals: [{ text: "Complete Main Story", completed: false }],
-      satisfaction: 0,
-      isComplete: false,
-    };
-    gameLibrary.push(fallbackGame);
-    saveLibrary();
-    renderLibrary();
-  }
-};
 
 async function callGeminiForStats(query) {
   const prompt = `Return JSON for game "${query}": {title, developer, genre, description, platforms, estimated_hours_main}`;

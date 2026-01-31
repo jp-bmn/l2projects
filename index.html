@@ -27,6 +27,9 @@
             <button id="btn-open-quiz" class="btn-quiz">
                 <i class="fa-solid fa-clipboard-question"></i> Find Me A Game
             </button>
+            <button id="btn-random-menu" class="btn-quiz">
+                <i class="fa-solid fa-shuffle"></i> Choose Random Game
+            </button>
         </div>
     </header>
 
@@ -79,6 +82,19 @@
     <div id="quiz-modal" class="modal-overlay hidden">
         <div class="quiz-modal-container">
             <div id="quiz-content"></div>
+        </div>
+    </div>
+
+    <!-- Random Game Modal -->
+    <div id="random-modal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Random Picker</h2>
+                <button id="btn-close-random" class="close-icon"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" id="random-body">
+                <!-- Content injected via JS -->
+            </div>
         </div>
     </div>
 
