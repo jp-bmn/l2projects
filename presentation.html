@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenCourier — Presentation</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0D1117;
+      --card: #1C2333;
+      --border: #30363D;
+      --accent: #58A6FF;
+      --accent-dim: #1F3A5F;
+      --success: #3FB950;
+      --warning: #D29922;
+      --danger: #F85149;
+      --orange: #DB6D28;
+      --purple: #A371F7;
+      --text: #E6EDF3;
+      --muted: #8B949E;
+      --dim: #484F58;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Slide container */
+    .slides { flex: 1; position: relative; overflow: hidden; }
+    .slide {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      padding: 60px 80px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s ease;
+      text-align: center;
+    }
+    .slide.active { opacity: 1; pointer-events: all; }
+    .slide.left { text-align: left; align-items: flex-start; }
+
+    /* Nav */
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 32px;
+      border-top: 1px solid var(--border);
+      background: #161B22;
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      background: transparent; border: 1px solid var(--border);
+      color: var(--muted); font-family: inherit; font-size: 13px;
+      padding: 8px 20px; border-radius: 8px; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .nav-btn:hover { color: var(--text); border-color: var(--accent); }
+    .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .slide-counter { color: var(--dim); font-size: 12px; }
+
+    /* Typography */
+    .label {
+      font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 12px; font-weight: 600;
+    }
+    h1 { font-size: 52px; font-weight: 800; line-height: 1.1; margin-bottom: 16px; }
+    h2 { font-size: 36px; font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
+    h3 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+    .sub { font-size: 18px; color: var(--muted); line-height: 1.6; max-width: 700px; }
+    .sub-sm { font-size: 15px; color: var(--muted); line-height: 1.6; }
+
+    /* Highlight */
+    .hl { color: var(--accent); }
+    .hl-green { color: var(--success); }
+    .hl-orange { color: var(--orange); }
+    .hl-purple { color: var(--purple); }
+    .hl-red { color: var(--danger); }
+    .hl-warn { color: var(--warning); }
+
+    /* Cards */
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 24px 28px;
+    }
+    .card-grid { display: grid; gap: 16px; width: 100%; max-width: 900px; }
+    .card-grid-2 { grid-template-columns: 1fr 1fr; }
+    .card-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+    /* Comparison table */
+    .compare-table { width: 100%; max-width: 860px; border-collapse: collapse; }
+    .compare-table th, .compare-table td {
+      padding: 14px 20px; text-align: left; font-size: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .compare-table th { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; }
+    .compare-table td:first-child { color: var(--muted); }
+    .compare-table .twilio { color: var(--danger); }
+    .compare-table .ours { color: var(--success); }
+
+    /* Steps */
+    .steps { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 760px; }
+    .step {
+      display: flex; align-items: flex-start; gap: 16px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px 20px;
+    }
+    .step-num {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--accent-dim); color: var(--accent);
+      font-size: 13px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .step-body h4 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .step-body p { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+    /* Code block */
+    .code-block {
+      background: #0D1117; border: 1px solid var(--border);
+      border-radius: 8px; padding: 16px 20px;
+      font-size: 13px; color: var(--text);
+      text-align: left; line-height: 1.7; width: 100%;
+    }
+    .code-comment { color: var(--dim); }
+    .code-key { color: var(--purple); }
+    .code-val { color: var(--success); }
+    .code-str { color: var(--orange); }
+
+    /* Badge */
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.05em;
+    }
+    .badge-blue { background: var(--accent-dim); color: var(--accent); }
+    .badge-green { background: rgba(63,185,80,0.15); color: var(--success); }
+    .badge-red { background: rgba(248,81,73,0.15); color: var(--danger); }
+
+    /* Big stat */
+    .stat-row { display: flex; gap: 40px; margin: 24px 0; }
+    .stat { text-align: center; }
+    .stat-val { font-size: 48px; font-weight: 800; line-height: 1; }
+    .stat-label { font-size: 13px; color: var(--muted); margin-top: 6px; }
+
+    /* Diagram */
+    .diagram {
+      display: flex; align-items: center; gap: 0;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden;
+      width: 100%; max-width: 820px;
+    }
+    .diag-box {
+      flex: 1; padding: 20px 16px; text-align: center;
+      font-size: 13px; font-weight: 600;
+    }
+    .diag-arrow {
+      font-size: 20px; color: var(--dim); padding: 0 4px;
+      flex-shrink: 0;
+    }
+    .diag-box.highlighted { background: var(--accent-dim); color: var(--accent); }
+    .diag-box.crossed { background: rgba(248,81,73,0.1); color: var(--danger); text-decoration: line-through; }
+
+    /* Progress bar */
+    .prog-bar {
+      height: 8px; background: var(--border); border-radius: 4px;
+      overflow: hidden; width: 100%; margin-top: 6px;
+    }
+    .prog-fill { height: 100%; border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+<div class="slides">
+
+  <!-- SLIDE 1: Title -->
+  <div class="slide active">
+    <div class="label">Developer Demo — 2026</div>
+    <h1><span class="hl">Open</span>Courier</h1>
+    <p class="sub">A developer-first messaging platform built to improve on Twilio's core sending capability — with two key additions.</p>
+    <div style="display:flex;gap:12px;margin-top:32px;">
+      <span class="badge badge-blue">Pull Inbox</span>
+      <span class="badge badge-green">Billing Intelligence</span>
+      <span class="badge badge-blue">Email · Slack</span>
+    </div>
+  </div>
+
+  <!-- SLIDE 2: The Problem with Twilio -->
+  <div class="slide">
+    <div class="label">The Problem</div>
+    <h2>Twilio is powerful — but has two pain points</h2>
+    <div class="card-grid card-grid-2" style="margin-top:32px;">
+      <div class="card">
+        <div style="font-size:28px;margin-bottom:12px;">🪝</div>
+        <h3 class="hl-red">Webhook-only Inbox</h3>
+        <p class="sub-sm" style="margin-top:8px;">To receive messages, you must expose a public URL, configure and maintain a webhook server, and handle retries and failures. Complex infrastructure just to read messages.</p>
+      </div>
+      <div class="card">
+        <div style="font-size:28px;margin-bottom:12px;">💸</div>
+        <h3 class="hl-red">No Billing Visibility</h3>
+        <p class="sub-sm" style="margin-top:8px;">Twilio bills you — but gives you no real-time dashboard to watch costs accumulate per operation, set budget limits, or get proactive alerts before you overspend.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: Our Solution -->
+  <div class="slide">
+    <div class="label">Our Solution</div>
+    <h2>OpenCourier fixes both — with a clean API</h2>
+    <div class="card-grid card-grid-2" style="margin-top:32px;">
+      <div class="card" style="border-color: var(--accent);">
+        <div style="font-size:28px;margin-bottom:12px;">📥</div>
+        <h3 class="hl">Improvement 1: Pull Inbox</h3>
+        <p class="sub-sm" style="margin-top:8px;">No webhooks. No public servers. Read your inbound messages with a single <span class="hl">GET /api/inbox</span> — just like polling an email API. Simple, stateless, zero infrastructure.</p>
+      </div>
+      <div class="card" style="border-color: var(--success);">
+        <div style="font-size:28px;margin-bottom:12px;">📊</div>
+        <h3 class="hl-green">Improvement 2: Billing Intelligence</h3>
+        <p class="sub-sm" style="margin-top:8px;">A real-time dashboard showing spend per channel, per operation, and vs. your budget — with configurable alerts at 75% and 90%, and an optional hard stop at 100%.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: Side-by-side comparison -->
+  <div class="slide">
+    <div class="label">Comparison</div>
+    <h2>OpenCourier vs. Twilio</h2>
+    <table class="compare-table" style="margin-top:28px;">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>Twilio</th>
+          <th>OpenCourier</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Send messages</td>
+          <td class="twilio">✓ REST API</td>
+          <td class="ours">✓ POST /api/send</td>
+        </tr>
+        <tr>
+          <td>Receive messages</td>
+          <td class="twilio">✗ Webhooks only (public URL required)</td>
+          <td class="ours">✓ GET /api/inbox — no server needed</td>
+        </tr>
+        <tr>
+          <td>Real-time cost tracking</td>
+          <td class="twilio">✗ Monthly invoice only</td>
+          <td class="ours">✓ Per-event cost logged in real time</td>
+        </tr>
+        <tr>
+          <td>Budget alerts</td>
+          <td class="twilio">✗ Not available</td>
+          <td class="ours">✓ Configurable at 75% / 90% / 100%</td>
+        </tr>
+        <tr>
+          <td>Hard budget stop</td>
+          <td class="twilio">✗ Not available</td>
+          <td class="ours">✓ Optional — blocks sends when exceeded</td>
+        </tr>
+        <tr>
+          <td>Spend by channel</td>
+          <td class="twilio">✗ Aggregated billing only</td>
+          <td class="ours">✓ Email vs Slack vs Inbox pulls</td>
+        </tr>
+        <tr>
+          <td>Webhook infrastructure</td>
+          <td class="twilio">✗ Required for inbound</td>
+          <td class="ours">✓ None required</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- SLIDE 5: How Pull Inbox works -->
+  <div class="slide">
+    <div class="label">Improvement 1</div>
+    <h2>Pull Inbox — How it works</h2>
+    <div class="diagram" style="margin-top:28px;">
+      <div class="diag-box">Sender<br/><span style="font-size:11px;color:var(--muted);">email / app</span></div>
+      <div class="diag-arrow">→</div>
+      <div class="diag-box highlighted">OpenCourier<br/><span style="font-size:11px;">stores message</span></div>
+      <div class="diag-arrow">←</div>
+      <div class="diag-box">Your App<br/><span style="font-size:11px;color:var(--muted);">GET /api/inbox</span></div>
+    </div>
+    <div class="steps" style="margin-top:24px;">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>Message arrives inbound</h4>
+          <p>Stored in the <span class="hl">messages</span> table with status <span class="hl-green">delivered</span>. No webhook fired.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>Your app polls when ready</h4>
+          <p><code class="hl">GET /api/inbox?status=unread</code> — returns messages + counts. Each call costs <span class="hl-orange">$0.0002</span> and is logged.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>Mark messages read or archived</h4>
+          <p><code class="hl">PATCH /api/inbox/:id</code> with <span class="hl-green">{ status: "read" }</span> — no infrastructure needed.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: Billing Intelligence -->
+  <div class="slide">
+    <div class="label">Improvement 2</div>
+    <h2>Billing Intelligence — How it works</h2>
+    <div class="card-grid card-grid-3" style="margin-top:28px;max-width:860px;">
+      <div class="card">
+        <h3 class="hl-green" style="font-size:18px;">Rate Card</h3>
+        <div style="margin-top:12px;font-size:13px;line-height:2;">
+          <div>Email send <span class="hl-green" style="float:right;">$0.0010</span></div>
+          <div>Slack send <span class="hl-green" style="float:right;">$0.0050</span></div>
+          <div>Inbox pull <span class="hl-orange" style="float:right;">$0.0002</span></div>
+          <div>Storage/day <span class="hl-purple" style="float:right;">$0.0001</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3 class="hl" style="font-size:18px;">Budget Thresholds</h3>
+        <div style="margin-top:12px;">
+          <div style="margin-bottom:10px;">
+            <div style="font-size:13px;display:flex;justify-content:space-between;">
+              <span class="hl-warn">75% Warning</span><span>Alert fired</span>
+            </div>
+            <div class="prog-bar"><div class="prog-fill" style="width:75%;background:var(--warning);"></div></div>
+          </div>
+          <div style="margin-bottom:10px;">
+            <div style="font-size:13px;display:flex;justify-content:space-between;">
+              <span class="hl-red">90% Critical</span><span>Alert fired</span>
+            </div>
+            <div class="prog-bar"><div class="prog-fill" style="width:90%;background:var(--danger);"></div></div>
+          </div>
+          <div>
+            <div style="font-size:13px;display:flex;justify-content:space-between;">
+              <span>100% Hard Stop</span><span class="badge badge-green">Optional</span>
+            </div>
+            <div class="prog-bar"><div class="prog-fill" style="width:100%;background:var(--dim);"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3 class="hl-purple" style="font-size:18px;">Real-time Events</h3>
+        <div style="margin-top:12px;font-size:13px;line-height:2;color:var(--muted);">
+          <div>Every send → <span class="hl">usage_event</span></div>
+          <div>Every inbox pull → logged</div>
+          <div>Failed sends → cost: $0</div>
+          <div>Supabase Realtime → live feed</div>
+          <div>History chart → per day</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: Dashboard walkthrough -->
+  <div class="slide left">
+    <div class="label">Dashboard Walkthrough</div>
+    <h2>What you see in the UI</h2>
+    <div class="card-grid" style="margin-top:24px;max-width:900px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="card">
+          <h3 style="font-size:15px;margin-bottom:8px;">↑ <span class="hl">Send Console</span></h3>
+          <p class="sub-sm">Compose and send a real email (via Resend). Shows live cost preview and budget % before you send. Tracks status: queued → sent → delivered over 3.5 seconds.</p>
+        </div>
+        <div class="card">
+          <h3 style="font-size:15px;margin-bottom:8px;">↓ <span class="hl">Pull Inbox</span></h3>
+          <p class="sub-sm">Click "Pull Inbox" to fetch inbound messages via GET. Each pull is metered and logged. Filter by unread / read / archived. Simulate inbound with one click.</p>
+        </div>
+        <div class="card">
+          <h3 style="font-size:15px;margin-bottom:8px;">◈ <span class="hl">Billing Dashboard</span></h3>
+          <p class="sub-sm">KPI cards for total spend, messages sent, inbox pulls, and budget remaining. Spend chart by day. Channel cost breakdown. Budget progress bar with alert thresholds.</p>
+        </div>
+        <div class="card">
+          <h3 style="font-size:15px;margin-bottom:8px;">⚡ <span class="hl">Activity Feed</span></h3>
+          <p class="sub-sm">Right-hand panel. Every API event — sends, inbox pulls, failures — streams in real time via Supabase Realtime (WebSocket). Session total shown at the bottom.</p>
+        </div>
+        <div class="card">
+          <h3 style="font-size:15px;margin-bottom:8px;">$ <span class="hl">Rate Card</span></h3>
+          <p class="sub-sm">Modal showing per-operation pricing. Demonstrates the metered model — you see exactly what each action costs before you take it.</p>
+        </div>
+        <div class="card">
+          <h3 style="font-size:15px;margin-bottom:8px;">🛠 <span class="hl">Dev Tools</span></h3>
+          <p class="sub-sm">Sidebar bottom. "Simulate Inbound" creates a realistic inbound message. "Reset Seed Data" restores the demo state to 65% budget — ready for a clean demo run.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: Tech Stack -->
+  <div class="slide">
+    <div class="label">Architecture</div>
+    <h2>Tech Stack</h2>
+    <div class="card-grid card-grid-3" style="margin-top:32px;">
+      <div class="card" style="text-align:center;">
+        <div style="font-size:32px;margin-bottom:12px;">⚡</div>
+        <h3 class="hl" style="font-size:16px;">Backend</h3>
+        <p class="sub-sm" style="margin-top:8px;">Node.js + Express<br/>Supabase (PostgreSQL)<br/>Resend (Email API)<br/>Railway (hosting)</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:32px;margin-bottom:12px;">🎨</div>
+        <h3 class="hl" style="font-size:16px;">Frontend</h3>
+        <p class="sub-sm" style="margin-top:8px;">React + Vite<br/>Tailwind CSS v4<br/>Zustand (state)<br/>Supabase Realtime</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:32px;margin-bottom:12px;">🗃️</div>
+        <h3 class="hl" style="font-size:16px;">Database</h3>
+        <p class="sub-sm" style="margin-top:8px;"><span class="hl">messages</span> — inbox + outbox<br/><span class="hl">usage_events</span> — billing log<br/><span class="hl">budgets</span> — config + limits<br/>Realtime on usage_events</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: Demo flow -->
+  <div class="slide">
+    <div class="label">Live Demo</div>
+    <h2>Demo Script</h2>
+    <div class="steps" style="margin-top:28px;">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>Start at 65% budget</h4>
+          <p>Open Billing → show $6.48 spent of $10. Spend chart shows 14 days of history. Budget alerts configured at 75% and 90%.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>Send a real email</h4>
+          <p>Send Console → fill in recipient + body → click Send. Watch Activity Feed update live. See status go queued → sent → delivered in 3.5s.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>Push past 75% — trigger alert</h4>
+          <p>Send 3–5 more messages. Budget bar turns yellow, Alert Banner appears. Billing Dashboard KPIs update.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h4>Demonstrate Pull Inbox</h4>
+          <p>Switch to Inbox → click "Pull Inbox". Show inbound messages, filter tabs, mark one as read. Show the $0.0002 cost logged in Activity Feed — no webhook needed.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <h4>Reset for a clean run</h4>
+          <p>Sidebar → Dev Tools → Reset Seed Data. Back to 65% in seconds.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 10: Close -->
+  <div class="slide">
+    <div class="label">Summary</div>
+    <h1 style="font-size:42px;">Twilio sends messages.<br/><span class="hl">OpenCourier</span> shows you the cost.</h1>
+    <div class="stat-row" style="margin-top:36px;">
+      <div class="stat">
+        <div class="stat-val hl">2</div>
+        <div class="stat-label">Core improvements<br/>over Twilio</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val hl-green">8</div>
+        <div class="stat-label">REST API<br/>endpoints</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val hl-orange">$0</div>
+        <div class="stat-label">Webhook<br/>infrastructure needed</div>
+      </div>
+    </div>
+    <p class="sub" style="margin-top:36px;">Pull Inbox + Billing Intelligence — built on Express, Supabase, and Resend.</p>
+  </div>
+
+</div>
+
+<!-- Navigation -->
+<nav>
+  <button class="nav-btn" id="prevBtn" onclick="navigate(-1)" disabled>← Prev</button>
+  <span class="slide-counter" id="counter">1 / 10</span>
+  <button class="nav-btn" id="nextBtn" onclick="navigate(1)">Next →</button>
+</nav>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  let current = 0;
+
+  function navigate(dir) {
+    slides[current].classList.remove('active');
+    current = Math.max(0, Math.min(slides.length - 1, current + dir));
+    slides[current].classList.add('active');
+    document.getElementById('counter').textContent = `${current + 1} / ${slides.length}`;
+    document.getElementById('prevBtn').disabled = current === 0;
+    document.getElementById('nextBtn').disabled = current === slides.length - 1;
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') navigate(1);
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') navigate(-1);
+  });
+</script>
+</body>
+</html>

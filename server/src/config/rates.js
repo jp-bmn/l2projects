@@ -1,0 +1,6 @@
+module.exports = {
+  RATE_EMAIL_SEND: 0.001,
+  RATE_SLACK_SEND: 0.005,
+  RATE_INBOX_PULL: 0.0002,
+  RATE_STORAGE_DAY: 0.0001,
+};
