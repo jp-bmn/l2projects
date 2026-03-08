@@ -1,0 +1,19 @@
+{
+  "name": "greeneyes-nye-backend",
+  "version": "1.0.0",
+  "description": "GreenEyes NYC — Backend API server",
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon server.js",
+    "start": "node server.js",
+    "seed": "node db/seed.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "sql.js": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}

@@ -1,0 +1,63 @@
+# GreenEyes NYC — Cursor Rules
+
+## Project Context
+This is a full-stack React + Node.js project for a NYC energy reduction monitoring platform.
+It is a 6-page marketing/product website with a live dashboard.
+
+## Stack
+- Frontend: React 18, Vite, Tailwind CSS v3, Recharts, Axios
+- Backend: Express, better-sqlite3 (SQLite), Node.js
+- No TypeScript (plain JS/JSX)
+
+## Code Style
+- Use functional React components with hooks only (no class components)
+- Use Tailwind CSS utility classes for all styling (no inline styles except for dynamic values)
+- Use `const` for all variables and function declarations
+- No semicolons unless necessary
+- 2-space indentation
+- Single quotes for strings
+
+## Architecture Rules
+- All API calls live in `frontend/src/api/*.js` files
+- All API files must include mock data fallbacks (safeFetch pattern)
+- Dashboard widgets live in `frontend/src/components/dashboard/`
+- Reusable UI primitives live in `frontend/src/components/ui/`
+- Each of the 6 pages lives in `frontend/src/components/pages/`
+- Backend routes live in `backend/routes/` — one file per resource
+- Database schema is managed in `backend/db/database.js`
+- Seed data lives in `backend/db/seed.js`
+
+## Design System
+- Primary green: `#22c55e` (grass green)
+- Dark green: `#16a34a`
+- Light green: `#4ade80`
+- Neutral blue circles: `#64b5f6`
+- Blueprint navy: `#0f2942`
+- Blueprint line: `#4a9fd4`
+- Light gray-blue bg: `#e8edf2` to `#cde0e8` gradient
+- Dashboard bg: `#020917` to `#0a0f1e`
+
+## Database Tables
+buildings, ll97_limits, compliance_snapshots, energy_readings, solar_readings, alerts, sensors, floors, users, user_buildings
+
+## API Endpoints
+GET /api/buildings, /api/buildings/:id, /api/buildings/:id/ll97, /api/buildings/:id/compliance
+GET /api/energy/:id, /api/energy/:id/current, /api/energy/:id/floors
+GET /api/solar/:id, /api/solar/:id/performance
+GET /api/alerts/:id, /api/alerts/:id/count
+PATCH /api/alerts/:id/resolve
+GET /api/sensors/:id, /api/sensors/:id/status
+PATCH /api/sensors/:id/heartbeat
+GET /api/health
+
+## When adding new features
+1. Add the DB table/column to `backend/db/database.js` initSchema
+2. Add seed data to `backend/db/seed.js`
+3. Add route to `backend/routes/` and register in `backend/server.js`
+4. Add API function to `frontend/src/api/` with mock fallback
+5. Create component in appropriate `components/` subfolder
+6. Import and use in the relevant Page component
+
+## GitHub
+Repository: https://github.com/MichaelFehdrau0205/greeneyes-nye
+Commit style: conventional commits (feat:, fix:, refactor:, docs:)

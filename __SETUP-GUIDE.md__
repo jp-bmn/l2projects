@@ -1,0 +1,141 @@
+# Setup Guide — GreenEyes NYC
+
+Step-by-step installation and configuration guide.
+
+---
+
+## 1. Clone the Repository
+
+```bash
+git clone https://github.com/MichaelFehdrau0205/greeneyes-nye.git
+cd greeneyes-nye
+```
+
+---
+
+## 2. Backend Setup
+
+```bash
+cd backend
+npm install
+```
+
+### Seed the database
+```bash
+npm run seed
+```
+This creates `backend/db/greeneyes.sqlite` with 3 sample buildings, 7 days of energy readings, solar data, alerts, and sensor data.
+
+### Start the API server
+```bash
+npm run dev        # development (nodemon auto-restart)
+# or
+npm start          # production
+```
+
+The API runs at **http://localhost:4000**
+
+---
+
+## 3. Frontend Setup
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The site runs at **http://localhost:3000**
+
+The Vite dev server proxies `/api/*` to `http://localhost:4000` automatically.
+
+---
+
+## 4. Building for Production
+
+```bash
+# Frontend production build
+cd frontend
+npm run build      # outputs to frontend/dist/
+
+# Backend can be deployed as-is with:
+npm start
+```
+
+---
+
+## 5. Opening in Cursor
+
+1. Open **Cursor** IDE
+2. File → Open Folder → select `greenEyesNYE/`
+3. Cursor will read `.cursor/rules/project.mdc` for AI context
+4. The AI assistant (Claude) will understand the full project structure
+
+### Cursor + Claude Tips
+- Ask: *"Add a new route for EV charger readings"*
+- Ask: *"Create a new KPI card for water consumption"*
+- Ask: *"Add animation to the wire paths on Page 1"*
+- The `.cursorrules` file gives Claude context about code style and architecture
+
+---
+
+## 6. Pushing to GitHub
+
+```bash
+git add .
+git commit -m "Initial commit — GreenEyes NYC full-stack project"
+git remote add origin https://github.com/MichaelFehdrau0205/greeneyes-nye.git
+git push -u origin main
+```
+
+---
+
+## 7. Troubleshooting
+
+### `better-sqlite3` build error
+```bash
+cd backend
+npm install --build-from-source better-sqlite3
+```
+
+### Port conflict
+Change backend port in `backend/server.js`:
+```js
+const PORT = process.env.PORT || 4001  // change to any free port
+```
+Then update `frontend/vite.config.js` proxy target accordingly.
+
+### Frontend can't reach API
+Make sure backend is running at port 4000 before opening the dashboard (Page 3). Pages 1, 2, 4, 5, 6 don't need the backend.
+
+---
+
+## 8. Adding NYC Landscape Image (Page 2)
+
+The user will provide the NYC landscape photo. To add it:
+
+1. Place the image in `frontend/public/nyc-skyline.jpg`
+2. In `Page2NYC.jsx`, replace the SVG skyline `<div>` with:
+```jsx
+<img
+  src="/nyc-skyline.jpg"
+  alt="NYC Skyline"
+  className="absolute inset-0 w-full h-full object-cover object-bottom"
+/>
+```
+
+---
+
+## 9. Project File Count Summary
+
+| Category | Files |
+|----------|-------|
+| Frontend pages | 6 |
+| Dashboard components | 10 |
+| UI components | 4 |
+| API modules | 5 |
+| Backend routes | 5 |
+| Backend DB | 2 |
+| Documentation | 4 |
+| Config files | 7 |
+| **Total** | **43** |

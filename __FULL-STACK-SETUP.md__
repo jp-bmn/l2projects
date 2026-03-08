@@ -1,0 +1,202 @@
+# Full-Stack Setup Guide — GreenEyes NYC
+
+Comprehensive reference for the complete application architecture.
+
+---
+
+## Architecture Overview
+
+```
+greenEyesNYE/
+├── frontend/                  # React + Vite + Tailwind
+│   ├── src/
+│   │   ├── api/               # API call functions (with mock fallbacks)
+│   │   │   ├── buildings.js   # GET buildings, ll97, compliance
+│   │   │   ├── energy.js      # GET readings, current, floor heatmap
+│   │   │   ├── solar.js       # GET solar output & performance
+│   │   │   ├── alerts.js      # GET alerts & count
+│   │   │   └── sensors.js     # GET sensor status & heartbeat
+│   │   ├── components/
+│   │   │   ├── pages/         # 6 full-height page sections
+│   │   │   │   ├── Page1Intro.jsx
+│   │   │   │   ├── Page2NYC.jsx
+│   │   │   │   ├── Page3Dashboard.jsx   ← main API consumer
+│   │   │   │   ├── Page4Devices.jsx
+│   │   │   │   ├── Page5Features.jsx
+│   │   │   │   └── Page6Outro.jsx
+│   │   │   ├── dashboard/     # Dashboard widget components
+│   │   │   │   ├── FineRiskMeter.jsx
+│   │   │   │   ├── ComplianceProgress.jsx
+│   │   │   │   ├── CountdownTimer.jsx
+│   │   │   │   ├── EnergyChart.jsx
+│   │   │   │   ├── FloorHeatmap.jsx
+│   │   │   │   ├── SolarWidget.jsx
+│   │   │   │   ├── AlertsPanel.jsx
+│   │   │   │   ├── SystemsStatus.jsx
+│   │   │   │   ├── KPICard.jsx
+│   │   │   │   └── BuildingSelector.jsx
+│   │   │   └── ui/            # Reusable UI components
+│   │   │       ├── WireAnimation.jsx   # SVG animated wires
+│   │   │       ├── IPhoneMockup.jsx    # iPhone 17 CSS mockup
+│   │   │       ├── IPadMockup.jsx      # iPad Pro CSS mockup
+│   │   │       └── BlueprintBuilding.jsx # SVG blueprint illustration
+│   │   ├── App.jsx
+│   │   ├── main.jsx
+│   │   └── index.css
+│   ├── index.html
+│   ├── vite.config.js         # proxy /api → localhost:4000
+│   ├── tailwind.config.js
+│   └── package.json
+│
+├── backend/                   # Express + SQLite
+│   ├── db/
+│   │   ├── database.js        # SQLite connection + schema init
+│   │   └── seed.js            # Sample data loader
+│   ├── routes/
+│   │   ├── buildings.js       # /api/buildings
+│   │   ├── energy.js          # /api/energy
+│   │   ├── solar.js           # /api/solar
+│   │   ├── alerts.js          # /api/alerts
+│   │   └── sensors.js         # /api/sensors
+│   └── server.js
+│
+├── .cursor/rules/project.mdc  # Cursor AI context rules
+├── .cursorrules               # Root Cursor rules
+├── __README.md__
+├── __FULL-STACK-SETUP.md__
+├── QUICK_START.md
+└── __SETUP-GUIDE.md__
+```
+
+---
+
+## Database Schema
+
+### buildings
+| Column | Type | Description |
+|--------|------|-------------|
+| id | INTEGER PK | Auto-increment |
+| name | TEXT | Building name |
+| address | TEXT | Street address |
+| borough | TEXT | NYC borough |
+| year_built | INTEGER | Construction year |
+| floors | INTEGER | Floor count |
+| gross_sq_ft | INTEGER | Total square footage |
+| owner | TEXT | Property owner |
+
+### ll97_limits
+| Column | Type | Description |
+|--------|------|-------------|
+| building_id | FK | References buildings |
+| year | INTEGER | Compliance year |
+| carbon_limit | REAL | tCO2e/sqft limit |
+| energy_limit | REAL | kBtu/sqft limit |
+| fine_per_ton | REAL | Fine rate ($/ton excess) |
+
+### compliance_snapshots
+| Column | Type | Description |
+|--------|------|-------------|
+| building_id | FK | References buildings |
+| snapshot_date | TEXT | Date of snapshot |
+| ll97_emissions_pct | REAL | % of limit used |
+| energy_intensity_pct | REAL | % of energy limit |
+| carbon_offset_pct | REAL | % offset achieved |
+| fine_risk_amount | REAL | Projected fine ($) |
+| days_remaining | INTEGER | Days until deadline |
+| deadline | TEXT | Compliance deadline |
+
+### energy_readings
+| Column | Type | Description |
+|--------|------|-------------|
+| building_id | FK | References buildings |
+| reading_date | TEXT | Day label (Mon–Sun) |
+| kwh_actual | REAL | Actual usage (kWh) |
+| kwh_limit | REAL | LL97 daily limit |
+| peak_demand_kw | REAL | Peak kW demand |
+| previous_week_kw | REAL | Same day prior week |
+
+### solar_readings
+| Column | Type | Description |
+|--------|------|-------------|
+| building_id | FK | References buildings |
+| reading_date | TEXT | Date |
+| output_kw | REAL | Current output (kW) |
+| output_kwh_today | REAL | Today's total (kWh) |
+| co2_offset_tons | REAL | CO₂ offset (tons) |
+| money_saved | REAL | Savings ($) |
+| capacity_pct | REAL | Capacity utilization % |
+| ac_score / e_score / h_score | REAL | Efficiency indices |
+
+### alerts
+| Column | Type | Description |
+|--------|------|-------------|
+| building_id | FK | References buildings |
+| alert_type | TEXT | HVAC / WATER / LIGHTING |
+| severity | TEXT | critical / warning / info |
+| title | TEXT | Alert headline |
+| description | TEXT | Detail text |
+| created_at | TEXT | ISO timestamp |
+| resolved_at | TEXT | NULL = active |
+
+### sensors
+| Column | Type | Description |
+|--------|------|-------------|
+| building_id | FK | References buildings |
+| sensor_type | TEXT | HVAC / Lighting / Solar / Water / Backup Power |
+| status | TEXT | ONLINE / WARN / ALERT |
+| last_heartbeat | TEXT | ISO timestamp |
+| location | TEXT | Physical location |
+
+### floors
+| Column | Type | Description |
+|--------|------|-------------|
+| building_id | FK | References buildings |
+| floor_number | INTEGER | 1–30+ |
+| energy_status | TEXT | normal / elevated / critical |
+| occupancy_pct | REAL | Occupancy percentage |
+
+### users + user_buildings
+- `users`: name, email, initials, role (admin/manager)
+- `user_buildings`: junction table — which buildings each user can access
+
+---
+
+## Environment Variables
+
+Currently no `.env` is required. To add:
+
+```bash
+# backend/.env
+PORT=4000
+
+# frontend/.env.local
+VITE_API_URL=http://localhost:4000/api
+```
+
+---
+
+## API Reference
+
+```
+GET    /api/buildings                      — list all buildings
+GET    /api/buildings/:id                  — single building
+GET    /api/buildings/:id/ll97             — LL97 limits for building
+GET    /api/buildings/:id/compliance       — latest compliance snapshot
+
+GET    /api/energy/:id?days=7              — energy readings (N days)
+GET    /api/energy/:id/current             — current usage KPI
+GET    /api/energy/:id/floors              — floor energy status grid
+
+GET    /api/solar/:id                      — latest solar reading
+GET    /api/solar/:id/performance          — solar performance details
+
+GET    /api/alerts/:id                     — active alerts list
+GET    /api/alerts/:id/count               — active alert count
+PATCH  /api/alerts/:id/resolve             — mark alert resolved
+
+GET    /api/sensors/:id                    — sensor list + status
+GET    /api/sensors/:id/status             — heartbeat status
+PATCH  /api/sensors/:id/heartbeat          — update heartbeat
+
+GET    /api/health                         — server health check
+```

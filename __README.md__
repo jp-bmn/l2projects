@@ -1,0 +1,90 @@
+# GreenEyes NYC — Reduction Monitor
+
+> Intelligent energy reduction monitoring for NYC buildings. Real-time LL97 compliance, carbon tracking, and automated alerts.
+
+---
+
+## Project Overview
+
+GreenEyes NYC is a 6-page marketing + product website showcasing a smart energy monitoring platform built for NYC buildings subject to Local Law 97 (LL97).
+
+### 6-Page Structure
+
+| Page | Section | Description |
+|------|---------|-------------|
+| 1 | Intro | Grass green background, animated wires, left-aligned tagline |
+| 2 | NYC Landscape | City skyline + feature circles (Saving, Reliable, Fast, Free) |
+| 3 | Dashboard | Full live reduction monitor — gigantic product view |
+| 4 | Devices | iPad + 4 iPhone 17 mockups showing live features |
+| 5 | Features | Blueprint building illustration + 5 feature buttons + half-iPad |
+| 6 | Outro | Grass green, wires, right-aligned closing tagline |
+
+---
+
+## Tech Stack
+
+### Frontend
+- **React 18** + **Vite** — fast dev server with HMR
+- **Tailwind CSS v3** — utility-first styling
+- **Recharts** — energy bar chart, compliance graphs
+- **Axios** — HTTP client with mock data fallbacks
+
+### Backend
+- **Node.js** + **Express** — REST API server
+- **better-sqlite3** — embedded SQLite, zero config
+- **CORS** — configured for localhost:3000
+
+---
+
+## Data Sources → UI Components
+
+| Source | Powers |
+|--------|--------|
+| `buildings` + `ll97_limits` + `compliance_snapshots` | Fine Risk Meter, Compliance bars, Countdown, Building Selector |
+| `energy_readings` | 7-day Energy Chart, Current Usage KPI, Floor Heatmap |
+| `solar_readings` | Solar Output KPI, Solar Performance card, AC/E/H scores |
+| `alerts` | Alert count KPI, Bell badge, Alert list panel |
+| `sensors` | Systems Status card, Live status dot in header |
+| `floors` + `energy_readings` | 30-cell floor energy grid |
+| `users` + `user_buildings` | User avatar, Building dropdown, Notification routing |
+
+---
+
+## API Endpoints That Use React
+
+All endpoints under `/api/` are called with `useEffect` + `useState` on **Page 3 (Dashboard)**.
+
+| Endpoint | Hook | Component |
+|----------|------|-----------|
+| `GET /api/buildings` | `useEffect` | `BuildingSelector` |
+| `GET /api/buildings/:id/compliance` | `useEffect` | `FineRiskMeter`, `ComplianceProgress`, `CountdownTimer` |
+| `GET /api/energy/:id?days=7` | `useEffect` | `EnergyChart` |
+| `GET /api/energy/:id/current` | `useEffect` | `KPICard` (Current Usage) |
+| `GET /api/energy/:id/floors` | `useEffect` | `FloorHeatmap` |
+| `GET /api/solar/:id` | `useEffect` | `KPICard` (Solar Output), `SolarWidget` |
+| `GET /api/alerts/:id` | `useEffect` | `AlertsPanel`, bell badge count |
+| `GET /api/sensors/:id` | `useEffect` | `SystemsStatus` |
+
+Pages 4 & 5 use **embedded mock data** (no API calls needed) for device mockup display.
+
+---
+
+## Repository
+
+GitHub: [https://github.com/MichaelFehdrau0205/greeneyes-nye](https://github.com/MichaelFehdrau0205/greeneyes-nye)
+
+---
+
+## Quick Commands
+
+```bash
+# Frontend dev server
+cd frontend && npm install && npm run dev
+
+# Backend API server
+cd backend && npm install && npm run seed && npm run dev
+
+# Both (from root — use two terminals)
+```
+
+See `QUICK_START.md` for full setup instructions.
