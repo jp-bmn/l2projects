@@ -1,74 +1,111 @@
-# Game Rack
+# [GitHub Desktop](https://desktop.github.com)
 
-The premiere gaming assistant for backlog completionists and defeating the boss known as “Indecisiveness”. With Game Rack, users will be able to reduce their video gaming backlog to a manageable amount by utilizing a series of questions based on the user’s interest. The assistant will take the accumulation of the user’s ratings and create a balanced list designed to support the user in completing each game, based on fun factors, timing, desired progress and more. Additionally, for days when it becomes hard to make a choice of what to play, Game Rack can find the perfect game to fit the user’s mood, whether it is in their gaming library or not.
+[GitHub Desktop](https://desktop.github.com/) is an open source [Electron](https://www.electronjs.org/)-based
+GitHub app. It is written in [TypeScript](https://www.typescriptlang.org) and
+uses [React](https://reactjs.org/).
 
-## The Problem
+![GitHub Desktop screenshot - Windows](https://cloud.githubusercontent.com/assets/359239/26094502/a1f56d02-3a5d-11e7-8799-23c7ba5e5106.png)
 
-Gaming backlogs can represent a ton of anxiety for gamers who want to complete what they have but do not know where to start. Also, as with most people, gamers who have a lot of options may not always know what to play based on their mood.
+## Where can I get it?
 
-## The Solution
+Download the official installer for your operating system:
 
-Create an app that leads with a questionnaire for the user’s account. Based on the results from the questionnaire, the assistant will compile a list of games designed to compliment the gamer’s mood and goals. Further, it will gamify the steps required to achieve these goals to focus on positive engagement, and rewards completion of the goals through generated images and content based on the games chosen.
+ - [macOS](https://central.github.com/deployments/desktop/desktop/latest/darwin)
+ - [macOS (Apple silicon)](https://central.github.com/deployments/desktop/desktop/latest/darwin-arm64)
+ - [Windows](https://central.github.com/deployments/desktop/desktop/latest/win32)
+ - [Windows machine-wide install](https://central.github.com/deployments/desktop/desktop/latest/win32?format=msi)
 
-## Steps Required
+You can install this alongside your existing GitHub Desktop for Mac or GitHub
+Desktop for Windows application.
 
-The effectiveness of Game Rack will be utilized through the following terms:
-*   Ranking games through multiple filters such as fun factors, time allotted, completionist (100%) requirements
-*   Structured progression trackers
-*   User support components to help retain attention and mood
-*   Mental and physical health check-ins
-*   Connected walkthroughs, tips & tricks and review content (video and written)
-*   Recommendations based on user mood and interests
+Linux is not officially supported; however, you can find installers created for Linux from a fork of GitHub Desktop in the [Community Releases](https://github.com/desktop/desktop#community-releases) section.
 
-## Who Is This For
+**NOTE**: There is no current migration path to import your existing
+repositories into the new application - you can drag-and-drop your repositories
+from disk onto the application to get started.
 
-Game Rack is designed for gamers who are committed to reducing their backlog of games as much as possible, but require assistance to stay focused and motivated. Also, if you’re a gamer who just wants to find a game quickly to fit their mood but doesn’t want to choose themselves, Game Rack understands.
 
-## User Personas
+### Beta Channel
 
-### Persona 1: Hardcore Gamer
+Want to test out new features and get fixes before everyone else? Install the
+beta channel to get access to early builds of Desktop:
 
-> Our first user, Alex, is a 36 year old hardcore gamer who has been passionately completing video games his entire life. He can’t possibly keep track of all the games that have piqued his interest over the years, so he searches online for solutions. He comes across Game Rack and decides to give it a shot. He is impressed by how quickly the AI autocomplete feature is able to populate the required fields on the site, enabling him to add a game to his collection in mere seconds. He also likes how he is able to customize the goals required for completion, and constantly update them as he learns more about the game. After about 3 months of using Game Rack, he has cut down his backlog by over 50%!
+ - [macOS](https://central.github.com/deployments/desktop/desktop/latest/darwin?env=beta)
+ - [macOS (Apple silicon)](https://central.github.com/deployments/desktop/desktop/latest/darwin-arm64?env=beta)
+ - [Windows](https://central.github.com/deployments/desktop/desktop/latest/win32?env=beta)
+ - [Windows (ARM64)](https://central.github.com/deployments/desktop/desktop/latest/win32-arm64?env=beta)
 
-### Persona 2: Casual Gamer
+The release notes for the latest beta versions are available [here](https://desktop.github.com/release-notes/?env=beta).
 
-> Jen is a 20 year old new gamer who has joined our ranks thanks to a lot of insistence from her brother who purchased a Nintendo Switch for her on Christmas. However, she has no idea what game to play as she isn’t really a fan of the only game her brother got for her. She searches for recommendations online, and comes across Game Rack which offers free game recommendations to users based on a short questionnaire. Interested, she fills it out in under one minute and gets recommended a title. She is pleased to see that the title is available for demo thanks to the option she selected, and tries it out for free. After enjoying the trial, she purchases the full game and becomes absolutely immersed. Another satisfied customer down.
+### Community Releases
 
-## Requirements
+There are several community-supported package managers that can be used to
+install GitHub Desktop:
+ - Windows users can install using [winget](https://docs.microsoft.com/en-us/windows/package-manager/winget/) `c:/> winget install github-desktop` or [Chocolatey](https://chocolatey.org/) `c:\> choco install github-desktop`
+ - macOS users can install using [Homebrew](https://brew.sh/) package manager:
+      `$ brew install --cask github`
 
-**Legend**
-`[P0]` = Necessary for MVP
-`[P1]` = Important for delightful experience
-`[P2]` = Nice-to-have
+Installers for various Linux distributions can be found on the
+[`shiftkey/desktop`](https://github.com/shiftkey/desktop) fork.
 
-### Basics
-*   `[P0]` Users are able to access the webpage for the app
-*   `[P1]` Users can sign in/are auto signed in to save their game collection
-*   `[P2]` The app is available for download in the Google and Apple stores
+Arch Linux users can install the latest version from the
+[AUR](https://aur.archlinux.org/packages/github-desktop-bin/).
 
-### Game Collection
-*   `[P0]` Users can create cards containing pertinent game information
-*   `[P0]` Cards are added to a collection the user is able to view once created.
-*   `[P0]` Cards calculate game completion progress using the following formula: completed goals/total goals
-*   `[P0]` Users are able to edit card information during and after card creation.
-*   `[P0]` Users can delete cards at will
-*   `[P0]` The game collection can be filtered through all the information on the card
-*   `[P1]` Users are able to search for a game and auto populate cards with info using an AI button.
-*   `[P1]` Users are able to select a random game from their collection to play using a button
-*   `[P1]` Users are able to have a new game recommended to them by pressing a button and filling out a short questionnaire
-*   `[P2]` An animation plays when the user checks off every goal in a card
-*   `[P2]` Links to walkthroughs available on the game card
+## Is GitHub Desktop right for me? What are the primary areas of focus?
 
-## Pitch
+[This document](https://github.com/desktop/desktop/blob/development/docs/process/what-is-desktop.md) describes the focus of GitHub Desktop and who the product is most useful for.
 
-> Imagine if your Steam library, your Switch collection, and that mountain of “I’ll totally play this someday” games could hire a therapist, a personal trainer, and a data scientist… and they all showed up on time. That’s Game Rack.
->
-> Tired of scrolling through 200 games only to reopen the same three? Game Rack takes your entire backlog, sits you down for a chill little preference survey, and then says, “Okay, here’s what you actually want to play.” No more existential dread at the “What should I start next?” screen—just a clean 0–100 ranking of your games based on your real tastes, not vibes and nostalgia fog.
->
-> Each game gets its own AI‑powered Game Card, serving up:
-> *   A quick synopsis so you remember what the game is actually about (“Oh right, this wasn’t the farming sim, this was the one with the time‑traveling cats.”)
-> *   Progress verification so you know what you’ve beaten, abandoned, or rage‑quit “temporarily.”
->
-> And when you finally find That One Game you’re obsessed with? Game Rack lets you search for similar titles inside your own backlog so you can ride that enjoyment wave instead of doom‑scrolling store pages and adding yet another “maybe later” to the pile.
->
-> **Game Rack:** because your backlog doesn’t need more games—it needs an intervention.
+And to see what the team is working on currently and in the near future, check out the [GitHub Desktop roadmap](https://github.com/desktop/desktop/blob/development/docs/process/roadmap.md).
+
+## I have a problem with GitHub Desktop
+
+Note: The [GitHub Desktop Code of Conduct](https://github.com/desktop/desktop/blob/development/CODE_OF_CONDUCT.md) applies in all interactions relating to the GitHub Desktop project.
+
+First, please search the [open issues](https://github.com/desktop/desktop/issues?q=is%3Aopen)
+and [closed issues](https://github.com/desktop/desktop/issues?q=is%3Aclosed)
+to see if your issue hasn't already been reported (it may also be fixed).
+
+There is also a list of [known issues](https://github.com/desktop/desktop/blob/development/docs/known-issues.md)
+that are being tracked against Desktop, and some of these issues have workarounds.
+
+If you can't find an issue that matches what you're seeing, open a [new issue](https://github.com/desktop/desktop/issues/new/choose),
+choose the right template and provide us with enough information to investigate
+further.
+
+## The issue I reported isn't fixed yet. What can I do?
+
+If nobody has responded to your issue in a few days, you're welcome to respond to it with a friendly ping in the issue. Please do not respond more than a second time if nobody has responded. The GitHub Desktop maintainers are constrained in time and resources, and diagnosing individual configurations can be difficult and time consuming. While we'll try to at least get you pointed in the right direction, we can't guarantee we'll be able to dig too deeply into any one person's issue.
+
+## How can I contribute to GitHub Desktop?
+
+The [CONTRIBUTING.md](./.github/CONTRIBUTING.md) document will help you get setup and
+familiar with the source. The [documentation](docs/) folder also contains more
+resources relevant to the project.
+
+If you're looking for something to work on, check out the [help wanted](https://github.com/desktop/desktop/issues?q=is%3Aissue+is%3Aopen+label%3A%22help%20wanted%22) label.
+
+## Building Desktop
+
+To get your development environment set up for building Desktop, see [setup.md](./docs/contributing/setup.md).
+
+## More Resources
+
+See [desktop.github.com](https://desktop.github.com) for more product-oriented
+information about GitHub Desktop.
+
+
+See our [getting started documentation](https://docs.github.com/en/desktop/installing-and-configuring-github-desktop/overview/getting-started-with-github-desktop) for more information on how to set up, authenticate, and configure GitHub Desktop.
+
+## License
+
+**[MIT](LICENSE)**
+
+The MIT license grant is not for GitHub's trademarks, which include the logo
+designs. GitHub reserves all trademark and copyright rights in and to all
+GitHub trademarks. GitHub's logos include, for instance, the stylized
+Invertocat designs that include "logo" in the file title in the following
+folder: [logos](app/static/logos).
+
+GitHub® and its stylized versions and the Invertocat mark are GitHub's
+Trademarks or registered Trademarks. When using GitHub's logos, be sure to
+follow the GitHub [logo guidelines](https://github.com/logos).

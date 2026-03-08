@@ -1,0 +1,90 @@
+// Accessibility preferences tab styles
+
+.accessibility-row {
+  margin: var(--spacing) 0;
+}
+
+.accessibility-slider-label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-half);
+  width: 100%;
+  font-size: var(--font-size-sm);
+  color: var(--text-color);
+}
+
+.accessibility-slider {
+  width: 100%;
+  height: 4px;
+  background: var(--box-border-color);
+  border-radius: 2px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--button-background);
+    border: 1px solid var(--box-border-color);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.1s ease;
+
+    &:hover {
+      background: var(--button-hover-background);
+    }
+  }
+
+  &:focus {
+    outline: none;
+
+    &::-webkit-slider-thumb {
+      box-shadow: 0 0 0 2px var(--focus-color);
+    }
+  }
+}
+
+// Voice commands help section
+.voice-commands-help {
+  margin-top: var(--spacing);
+  padding: var(--spacing);
+  background: var(--box-alt-background-color);
+  border: 1px solid var(--box-border-color);
+  border-radius: var(--border-radius);
+
+  h3 {
+    margin: 0 0 var(--spacing) 0;
+    font-size: var(--font-size);
+    font-weight: var(--font-weight-semibold);
+  }
+}
+
+.voice-commands-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+
+  th,
+  td {
+    padding: var(--spacing-half);
+    text-align: left;
+    border-bottom: 1px solid var(--box-border-color);
+  }
+
+  th {
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-secondary-color);
+  }
+
+  td:first-child {
+    font-family: var(--font-family-monospace);
+    color: var(--link-button-color);
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+}

@@ -1,0 +1,167 @@
+// Speech toolbar buttons (TTS and STT)
+// These buttons appear on the right side of the toolbar
+
+// TTS Toolbar Button
+.tts-toolbar-button {
+  // Dropdown content styling
+  .tts-dropdown-content {
+    padding: var(--spacing);
+    min-width: 220px;
+
+    .tts-dropdown-section {
+      padding: var(--spacing-half) 0;
+
+      &:not(:last-child) {
+        border-bottom: 1px solid var(--box-border-color);
+      }
+    }
+
+    .tts-dropdown-description {
+      font-size: var(--font-size-sm);
+      color: var(--text-secondary-color);
+      margin: var(--spacing-half) 0 0 0;
+      padding-left: 20px; // Align with checkbox label
+    }
+
+    .tts-dropdown-footer {
+      padding-top: var(--spacing);
+    }
+
+    .tts-stop-button {
+      width: 100%;
+      padding: var(--spacing-half) var(--spacing);
+      background: var(--button-background);
+      border: 1px solid var(--box-border-color);
+      border-radius: var(--border-radius);
+      color: var(--text-color);
+      cursor: pointer;
+      font-size: var(--font-size-sm);
+
+      &:hover {
+        background: var(--button-hover-background);
+      }
+    }
+
+    .tts-settings-link {
+      width: 100%;
+      padding: var(--spacing-half) 0;
+      background: none;
+      border: none;
+      color: var(--link-button-color);
+      cursor: pointer;
+      font-size: var(--font-size-sm);
+      text-align: left;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  // Speaking state indicator
+  &.tts-speaking {
+    .toolbar-button {
+      .octicon {
+        animation: tts-pulse 1s ease-in-out infinite;
+      }
+    }
+  }
+}
+
+// TTS pulse animation
+@keyframes tts-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+// STT Toolbar Button
+.stt-toolbar-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  &.stt-disabled {
+    .toolbar-button {
+      opacity: 0.5;
+    }
+  }
+
+  &.stt-listening {
+    .toolbar-button {
+      .octicon {
+        color: var(--color-error);
+      }
+    }
+  }
+
+  &.stt-error {
+    .toolbar-button {
+      .octicon {
+        color: var(--color-error);
+      }
+    }
+  }
+
+  // Listening indicator
+  .stt-listening-indicator {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-half);
+    padding: var(--spacing-half) var(--spacing);
+    background: var(--box-background-color);
+    border: 1px solid var(--box-border-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--base-box-shadow);
+    white-space: nowrap;
+    z-index: 100;
+    margin-top: var(--spacing-half);
+
+    .stt-pulse {
+      width: 8px;
+      height: 8px;
+      background: var(--color-error);
+      border-radius: 50%;
+      animation: stt-pulse-animation 1s ease-in-out infinite;
+    }
+
+    .stt-transcript {
+      font-size: var(--font-size-sm);
+      color: var(--text-secondary-color);
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+}
+
+// STT pulse animation (for the listening dot)
+@keyframes stt-pulse-animation {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+}
+
+// Speech buttons container (for positioning on right side of toolbar)
+.speech-toolbar-buttons {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  padding-right: var(--spacing);
+
+  > * {
+    margin-left: var(--spacing-half);
+  }
+}
