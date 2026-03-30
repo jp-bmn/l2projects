@@ -71,8 +71,7 @@ Pages 4 & 5 use **embedded mock data** (no API calls needed) for device mockup d
 
 ## Repository
 
-GitHub: [https://github.com/MichaelFehdrau0205/greeneyes-nye](https://github.com/MichaelFehdrau0205/greeneyes-nye)
-
+GitHub: [(https://github.com/jp-bmn/l2projects/branches/greeneyes)]
 ---
 
 ## Quick Commands
